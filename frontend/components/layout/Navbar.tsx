@@ -1,0 +1,282 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Trophy,
+  Users,
+  ShoppingBag,
+  Play,
+  Newspaper,
+  LayoutDashboard,
+  Menu,
+  X,
+  ChevronDown,
+  Zap,
+} from "lucide-react";
+import { NotificationBell } from "@/components/features/notifications/NotificationBell";
+import { useAuthStore } from "@/store/authStore";
+import { useContentStore } from "@/store/contentStore";
+import { UserMenu } from "@/components/features/auth/UserMenu";
+import { cn } from "@/lib/utils";
+
+const navLinks = [
+  {
+    label: "Турниры",
+    href: "/tournaments",
+    icon: Trophy,
+    children: [
+      { label: "Все турниры", href: "/tournaments" },
+      { label: "Активные", href: "/tournaments?status=active" },
+      { label: "Upcoming", href: "/tournaments?status=upcoming" },
+      { label: "Архив", href: "/tournaments/archive" },
+    ],
+  },
+  {
+    label: "Команды",
+    href: "/teams",
+    icon: Users,
+    children: [
+      { label: "Рейтинг команд", href: "/teams" },
+      { label: "Создать команду", href: "/teams/create" },
+      { label: "Найти команду", href: "/teams/find" },
+    ],
+  },
+  {
+    label: "Медиа",
+    href: "/media",
+    icon: Play,
+    children: [
+      { label: "Все видео", href: "/media" },
+      { label: "Хайлайты", href: "/media?cat=highlight" },
+      { label: "Стримы", href: "/media?cat=stream" },
+      { label: "Обучение", href: "/media?cat=educational" },
+    ],
+  },
+  { label: "Новости", href: "/news", icon: Newspaper },
+  { label: "Магазин", href: "/shop", icon: ShoppingBag },
+  { label: "Сообщество", href: "/community", icon: Users },
+];
+
+export function Navbar() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const pathname = usePathname();
+  const { user, isAuthenticated } = useAuthStore();
+  const { siteSettings } = useContentStore();
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <motion.header
+      initial={{ y: -80 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+        isScrolled
+          ? "bg-cyber-dark/95 backdrop-blur-xl border-b border-cyber-glass-border shadow-glow"
+          : "bg-transparent"
+      )}
+    >
+      {/* Top ticker - live updates */}
+      <div className="bg-cyber-purple-bright/20 border-b border-cyber-purple-bright/30 py-1 px-4 overflow-hidden">
+        <motion.div
+          animate={{ x: [0, -2000] }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="flex items-center gap-8 whitespace-nowrap"
+        >
+          <span className="flex items-center gap-2 text-xs text-cyber-neon font-mono">
+            <Zap className="w-3 h-3 animate-pulse" />
+            LIVE: CyberQELN Championship Season 2 — Финал через 2 часа
+          </span>
+          <span className="text-xs text-gray-500">•</span>
+          <span className="text-xs text-gray-400 font-mono">
+            🏆 Team Phantom vs Shadow Force — Полуфинал
+          </span>
+          <span className="text-xs text-gray-500">•</span>
+          <span className="text-xs text-cyan-400 font-mono">
+            Новый скин "Neon Phantom" в магазине
+          </span>
+          <span className="text-xs text-gray-500">•</span>
+          <span className="text-xs text-gray-400 font-mono">
+            🎮 Открыта регистрация на квалификации Q2 2026
+          </span>
+        </motion.div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="relative">
+              {siteSettings.logoUrl ? (
+                <img src={siteSettings.logoUrl} alt="logo" className="w-10 h-10 rounded-lg object-cover shadow-neon" />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-cyber-purple-bright to-cyber-neon-pink rounded-lg flex items-center justify-center shadow-neon group-hover:shadow-neon transition-shadow duration-300">
+                  <span className="font-display font-black text-white text-sm">{siteSettings.logoText || "CQ"}</span>
+                </div>
+              )}
+              <div className="absolute -inset-1 bg-gradient-to-br from-cyber-purple-bright to-cyber-neon-pink rounded-lg opacity-0 group-hover:opacity-30 blur transition-opacity duration-300" />
+            </div>
+            <div>
+              <span className="font-display font-black text-xl text-gradient-cyber tracking-wider">
+                {(siteSettings.siteName || "CyberQELN").slice(0, 5).toUpperCase()}
+              </span>
+              <span className="font-display font-black text-xl text-white">
+                {(siteSettings.siteName || "CyberQELN").slice(5).toUpperCase()}
+              </span>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <div
+                key={link.href}
+                className="relative"
+                onMouseEnter={() => link.children && setActiveDropdown(link.label)}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <Link
+                  href={link.href}
+                  className={cn(
+                    "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                    pathname?.startsWith(link.href) && link.href !== "/"
+                      ? "text-cyber-neon bg-cyber-neon/10"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <link.icon className="w-4 h-4" />
+                  {link.label}
+                  {link.children && (
+                    <ChevronDown
+                      className={cn(
+                        "w-3 h-3 transition-transform duration-200",
+                        activeDropdown === link.label && "rotate-180"
+                      )}
+                    />
+                  )}
+                </Link>
+
+                {/* Dropdown */}
+                <AnimatePresence>
+                  {link.children && activeDropdown === link.label && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full left-0 mt-2 w-52 glass-card rounded-xl overflow-hidden py-2"
+                    >
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className="block px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-cyber-neon/10 transition-colors duration-150"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </nav>
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-3">
+            {isAuthenticated ? (
+              <>
+                <NotificationBell />
+
+                {/* Dashboard link */}
+                <Link
+                  href="/dashboard"
+                  className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                </Link>
+
+                <UserMenu user={user} />
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/auth/login"
+                  className="hidden sm:block px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
+                >
+                  Войти
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-cyber-purple-bright to-cyber-neon rounded-lg hover:shadow-neon transition-all duration-300"
+                >
+                  Регистрация
+                </Link>
+              </div>
+            )}
+
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors"
+            >
+              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden bg-cyber-dark/98 backdrop-blur-xl border-t border-cyber-glass-border"
+          >
+            <div className="px-4 py-4 space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyber-neon/10 transition-all duration-200"
+                >
+                  <link.icon className="w-5 h-5 text-cyber-neon" />
+                  <span className="font-medium">{link.label}</span>
+                </Link>
+              ))}
+              {!isAuthenticated && (
+                <div className="pt-4 border-t border-cyber-glass-border flex gap-3">
+                  <Link
+                    href="/auth/login"
+                    className="flex-1 text-center py-3 rounded-xl border border-cyber-glass-border text-gray-300 hover:text-white transition-colors"
+                  >
+                    Войти
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    className="flex-1 text-center py-3 rounded-xl bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-semibold"
+                  >
+                    Регистрация
+                  </Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
+  );
+}

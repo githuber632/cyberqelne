@@ -1,0 +1,97 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
+import { Users, Trophy, DollarSign, Gamepad2, Globe, Zap } from "lucide-react";
+
+interface Stat {
+  label: string;
+  value: number;
+  suffix: string;
+  prefix?: string;
+  icon: React.ElementType;
+  color: string;
+  description: string;
+}
+
+const stats: Stat[] = [
+  { label: "Игроков", value: 12400, suffix: "+", icon: Users, color: "text-cyber-neon", description: "Зарегистрировано" },
+  { label: "Турниров", value: 340, suffix: "+", icon: Trophy, color: "text-yellow-400", description: "Проведено" },
+  { label: "Призовой фонд", value: 500, suffix: "M+", prefix: "", icon: DollarSign, color: "text-green-400", description: "Суммарно (UZS)" },
+  { label: "Матчей", value: 8900, suffix: "+", icon: Gamepad2, color: "text-cyber-neon-blue", description: "Сыграно" },
+  { label: "Стран", value: 12, suffix: "", icon: Globe, color: "text-cyber-neon-pink", description: "Участвуют" },
+  { label: "Live матчей", value: 3, suffix: "", icon: Zap, color: "text-red-400", description: "Прямо сейчас" },
+];
+
+function AnimatedCounter({ value, suffix, prefix = "" }: { value: number; suffix: string; prefix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  const motionValue = useMotionValue(0);
+  const spring = useSpring(motionValue, { stiffness: 100, damping: 30 });
+
+  useEffect(() => {
+    if (inView) {
+      motionValue.set(value);
+    }
+  }, [inView, value, motionValue]);
+
+  useEffect(() => {
+    return spring.on("change", (latest) => {
+      if (ref.current) {
+        ref.current.textContent = `${prefix}${Math.round(latest).toLocaleString()}${suffix}`;
+      }
+    });
+  }, [spring, suffix, prefix]);
+
+  return <span ref={ref}>{prefix}0{suffix}</span>;
+}
+
+export function StatsSection() {
+  return (
+    <section className="py-16 relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-cyber-purple/10 via-transparent to-cyber-neon-blue/10" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyber-neon/40 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-cyber-neon/40 to-transparent" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.05, y: -4 }}
+              className="stat-card text-center"
+            >
+              {/* Icon */}
+              <div className="flex justify-center mb-3">
+                <div className="w-10 h-10 rounded-xl bg-cyber-purple/30 flex items-center justify-center">
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
+              </div>
+
+              {/* Number */}
+              <div className={`font-display font-black text-2xl lg:text-3xl mb-1 ${stat.color}`}>
+                <AnimatedCounter
+                  value={stat.value}
+                  suffix={stat.suffix}
+                  prefix={stat.prefix}
+                />
+              </div>
+
+              {/* Label */}
+              <div className="text-white font-semibold text-sm mb-0.5">{stat.label}</div>
+              <div className="text-gray-600 text-xs font-mono">{stat.description}</div>
+
+              {/* Decorative glow */}
+              <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-gradient-to-r from-transparent via-current to-transparent ${stat.color} opacity-50`} />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

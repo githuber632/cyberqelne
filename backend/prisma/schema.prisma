@@ -1,0 +1,628 @@
+// CyberQELN Database Schema
+// PostgreSQL + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// USER SYSTEM
+// ============================================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  nickname     String   @unique
+  passwordHash String   @map("password_hash")
+  avatar       String?
+  bio          String?  @db.Text
+  country      String?  @default("UZ")
+  birthDate    DateTime? @map("birth_date")
+  role         UserRole @default(USER)
+  status       UserStatus @default(ACTIVE)
+  rating       Int      @default(1000)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  lastSeenAt   DateTime? @map("last_seen_at")
+
+  // MLBB account link (mock)
+  mlbbId       String?  @unique @map("mlbb_id")
+  mlbbServer   String?  @map("mlbb_server")
+
+  // Relations
+  team              TeamMember?
+  ownedTeams        Team[]         @relation("TeamOwner")
+  playerStats       PlayerStats?
+  matchHistory      MatchParticipant[]
+  tournamentReg     TournamentRegistration[]
+  posts             Post[]
+  comments          Comment[]
+  likes             Like[]
+  notifications     Notification[]
+  orders            Order[]
+  refreshTokens     RefreshToken[]
+  oauthAccounts     OAuthAccount[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+model PlayerStats {
+  id            String @id @default(uuid())
+  userId        String @unique @map("user_id")
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Match stats
+  totalMatches  Int @default(0) @map("total_matches")
+  wins          Int @default(0)
+  losses        Int @default(0)
+  winRate       Float @default(0) @map("win_rate")
+  mvpCount      Int @default(0) @map("mvp_count")
+  killDeathRatio Float @default(0) @map("kd_ratio")
+
+  // Tournament stats
+  tournamentsPlayed Int @default(0) @map("tournaments_played")
+  tournamentsWon    Int @default(0) @map("tournaments_won")
+  totalEarnings     BigInt @default(0) @map("total_earnings")
+
+  // ELO history tracked in RatingHistory
+  peakRating    Int @default(1000) @map("peak_rating")
+
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("player_stats")
+}
+
+model RatingHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  rating    Int
+  delta     Int
+  reason    String   // "match_win", "match_loss", "tournament_win", etc.
+  matchId   String?  @map("match_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("rating_history")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
+}
+
+model OAuthAccount {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider   String   // "google", "discord"
+  providerId String   @map("provider_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([provider, providerId])
+  @@map("oauth_accounts")
+}
+
+// ============================================================
+// TEAM SYSTEM
+// ============================================================
+
+model Team {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  tag         String     @unique @db.VarChar(6) // [CQ]
+  logo        String?
+  description String?    @db.Text
+  country     String?    @default("UZ")
+  rating      Int        @default(1000)
+  status      TeamStatus @default(ACTIVE)
+  ownerId     String     @map("owner_id")
+  owner       User       @relation("TeamOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  members          TeamMember[]
+  teamStats        TeamStats?
+  tournamentRegs   TournamentRegistration[]
+  matchesAsTeam1   Match[] @relation("Team1")
+  matchesAsTeam2   Match[] @relation("Team2")
+  winnerMatches    Match[] @relation("MatchWinner")
+  achievements     TeamAchievement[]
+
+  @@map("teams")
+}
+
+enum TeamStatus {
+  ACTIVE
+  DISBANDED
+  RECRUITING
+  INACTIVE
+}
+
+model TeamMember {
+  id       String     @id @default(uuid())
+  userId   String     @unique @map("user_id")
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId   String     @map("team_id")
+  team     Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  role     TeamRole   @default(PLAYER)
+  position String?    // "Jungler", "Gold", "EXP", "Mid", "Roam"
+  joinedAt DateTime   @default(now()) @map("joined_at")
+
+  @@map("team_members")
+}
+
+enum TeamRole {
+  OWNER
+  CAPTAIN
+  PLAYER
+  SUBSTITUTE
+}
+
+model TeamStats {
+  id        String @id @default(uuid())
+  teamId    String @unique @map("team_id")
+  team      Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  wins      Int    @default(0)
+  losses    Int    @default(0)
+  winRate   Float  @default(0) @map("win_rate")
+  tournamentsWon Int @default(0) @map("tournaments_won")
+  totalEarnings  BigInt @default(0) @map("total_earnings")
+
+  @@map("team_stats")
+}
+
+model TeamAchievement {
+  id          String   @id @default(uuid())
+  teamId      String   @map("team_id")
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  icon        String?
+  achievedAt  DateTime @map("achieved_at")
+
+  @@map("team_achievements")
+}
+
+// ============================================================
+// TOURNAMENT SYSTEM
+// ============================================================
+
+model Tournament {
+  id            String           @id @default(uuid())
+  title         String
+  slug          String           @unique
+  description   String?          @db.Text
+  game          String           @default("MLBB")
+  banner        String?
+  status        TournamentStatus @default(DRAFT)
+  format        TournamentFormat @default(SINGLE_ELIMINATION)
+
+  prizePool     BigInt           @default(0) @map("prize_pool")
+  entryFee      BigInt           @default(0) @map("entry_fee")
+  maxTeams      Int              @default(16) @map("max_teams")
+  minTeams      Int              @default(4) @map("min_teams")
+  teamSize      Int              @default(5) @map("team_size")
+
+  registrationStartAt DateTime  @map("registration_start_at")
+  registrationEndAt   DateTime  @map("registration_end_at")
+  startDate           DateTime  @map("start_date")
+  endDate             DateTime  @map("end_date")
+
+  rules         String?          @db.Text
+  organizerId   String?          @map("organizer_id")
+  featured      Boolean          @default(false)
+
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  registrations TournamentRegistration[]
+  brackets      Bracket[]
+  matches       Match[]
+  prizeDistribution PrizeDistribution[]
+
+  @@map("tournaments")
+}
+
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION
+  CHECKIN
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum TournamentFormat {
+  SINGLE_ELIMINATION
+  DOUBLE_ELIMINATION
+  ROUND_ROBIN
+  SWISS
+  LEAGUE
+}
+
+model TournamentRegistration {
+  id           String               @id @default(uuid())
+  tournamentId String               @map("tournament_id")
+  tournament   Tournament           @relation(fields: [tournamentId], references: [id])
+  teamId       String               @map("team_id")
+  team         Team                 @relation(fields: [teamId], references: [id])
+  userId       String               @map("user_id") // captain who registered
+  user         User                 @relation(fields: [userId], references: [id])
+  status       RegistrationStatus   @default(PENDING)
+  checkedIn    Boolean              @default(false) @map("checked_in")
+  seed         Int?                 // seeding for bracket placement
+  registeredAt DateTime             @default(now()) @map("registered_at")
+
+  @@unique([tournamentId, teamId])
+  @@map("tournament_registrations")
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLIST
+  WITHDRAWN
+}
+
+model Bracket {
+  id           String     @id @default(uuid())
+  tournamentId String     @map("tournament_id")
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  round        Int
+  bracketType  String     @default("winners") @map("bracket_type") // "winners", "losers", "grand_finals"
+  matches      Match[]
+
+  @@map("brackets")
+}
+
+model Match {
+  id           String      @id @default(uuid())
+  tournamentId String      @map("tournament_id")
+  tournament   Tournament  @relation(fields: [tournamentId], references: [id])
+  bracketId    String?     @map("bracket_id")
+  bracket      Bracket?    @relation(fields: [bracketId], references: [id])
+
+  team1Id      String?     @map("team1_id")
+  team1        Team?       @relation("Team1", fields: [team1Id], references: [id])
+  team2Id      String?     @map("team2_id")
+  team2        Team?       @relation("Team2", fields: [team2Id], references: [id])
+
+  winnerId     String?     @map("winner_id")
+  winner       Team?       @relation("MatchWinner", fields: [winnerId], references: [id])
+
+  score1       Int?        @map("score1")
+  score2       Int?        @map("score2")
+
+  status       MatchStatus @default(PENDING)
+  scheduledAt  DateTime?   @map("scheduled_at")
+  startedAt    DateTime?   @map("started_at")
+  finishedAt   DateTime?   @map("finished_at")
+
+  streamUrl    String?     @map("stream_url")
+  vodUrl       String?     @map("vod_url")
+
+  roundNumber  Int         @map("round_number")
+  matchNumber  Int         @map("match_number")
+
+  participants MatchParticipant[]
+  games        MatchGame[]
+
+  @@map("matches")
+}
+
+enum MatchStatus {
+  PENDING
+  SCHEDULED
+  LIVE
+  FINISHED
+  CANCELLED
+  FORFEIT
+}
+
+model MatchGame {
+  id       String  @id @default(uuid())
+  matchId  String  @map("match_id")
+  match    Match   @relation(fields: [matchId], references: [id])
+  gameNum  Int     @map("game_num")
+  winnerId String? @map("winner_id")
+  duration Int?    // seconds
+  mapName  String? @map("map_name")
+
+  @@map("match_games")
+}
+
+model MatchParticipant {
+  id       String @id @default(uuid())
+  matchId  String @map("match_id")
+  match    Match  @relation(fields: [matchId], references: [id])
+  userId   String @map("user_id")
+  user     User   @relation(fields: [userId], references: [id])
+  teamId   String @map("team_id")
+  isMvp    Boolean @default(false) @map("is_mvp")
+  kills    Int?
+  deaths   Int?
+  assists  Int?
+  hero     String?
+
+  @@map("match_participants")
+}
+
+model PrizeDistribution {
+  id           String     @id @default(uuid())
+  tournamentId String     @map("tournament_id")
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  place        Int
+  teamId       String?    @map("team_id")
+  amount       BigInt
+  distributed  Boolean    @default(false)
+  distributedAt DateTime? @map("distributed_at")
+
+  @@map("prize_distributions")
+}
+
+// ============================================================
+// SHOP / E-COMMERCE
+// ============================================================
+
+model Product {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String        @unique
+  description String?       @db.Text
+  price       BigInt
+  oldPrice    BigInt?       @map("old_price")
+  category    ProductCategory
+  stock       Int           @default(-1) // -1 = unlimited (digital)
+  images      String[]
+  tags        String[]
+  featured    Boolean       @default(false)
+  isActive    Boolean       @default(true) @map("is_active")
+  isDigital   Boolean       @default(false) @map("is_digital")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+enum ProductCategory {
+  MERCH_CLOTHING
+  MERCH_ACCESSORIES
+  GAMING_PERIPHERAL
+  DIGITAL_CURRENCY
+  DIGITAL_SKIN
+  DIGITAL_BOOST
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  userId      String      @map("user_id")
+  user        User        @relation(fields: [userId], references: [id])
+  status      OrderStatus @default(PENDING)
+  totalAmount BigInt      @map("total_amount")
+
+  // Delivery info (for physical goods)
+  fullName    String?     @map("full_name")
+  address     String?
+  city        String?
+  phone       String?
+
+  // Payment
+  paymentMethod PaymentMethod @map("payment_method")
+  paymentId     String?       @map("payment_id") // external payment ID
+  paidAt        DateTime?     @map("paid_at")
+
+  promoCode   String?     @map("promo_code")
+  discount    Int         @default(0) // percentage
+
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  items       OrderItem[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  PAYME
+  CLICK
+  UZCARD
+  HUMO
+  CRYPTO
+  CYBERCOINS
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String  @map("order_id")
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     BigInt  // price at time of purchase
+
+  @@map("order_items")
+}
+
+// ============================================================
+// COMMUNITY
+// ============================================================
+
+model Post {
+  id          String      @id @default(uuid())
+  authorId    String      @map("author_id")
+  author      User        @relation(fields: [authorId], references: [id])
+  title       String?
+  content     String      @db.Text
+  media       String[]    // image/video URLs
+  category    PostCategory @default(GENERAL)
+  status      PostStatus  @default(PUBLISHED)
+  pinned      Boolean     @default(false)
+  viewCount   Int         @default(0) @map("view_count")
+  likeCount   Int         @default(0) @map("like_count")
+  commentCount Int        @default(0) @map("comment_count")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  comments    Comment[]
+  likes       Like[]
+  tags        PostTag[]
+
+  @@map("posts")
+}
+
+enum PostCategory {
+  GENERAL
+  TOURNAMENT_NEWS
+  TEAM_NEWS
+  STRATEGY
+  HIGHLIGHTS
+  MEMES
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+  DELETED
+}
+
+model Comment {
+  id        String     @id @default(uuid())
+  postId    String     @map("post_id")
+  post      Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String     @map("author_id")
+  author    User       @relation(fields: [authorId], references: [id])
+  content   String     @db.Text
+  parentId  String?    @map("parent_id")
+  parent    Comment?   @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[]  @relation("CommentReplies")
+  likeCount Int        @default(0) @map("like_count")
+  status    PostStatus @default(PUBLISHED)
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String?  @map("post_id")
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+model PostTag {
+  id     String @id @default(uuid())
+  postId String @map("post_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    String
+
+  @@unique([postId, tag])
+  @@map("post_tags")
+}
+
+// ============================================================
+// MEDIA
+// ============================================================
+
+model Video {
+  id           String        @id @default(uuid())
+  title        String
+  description  String?       @db.Text
+  thumbnailUrl String?       @map("thumbnail_url")
+  videoUrl     String        @map("video_url")
+  duration     Int?          // seconds
+  category     VideoCategory
+  viewCount    Int           @default(0) @map("view_count")
+  featured     Boolean       @default(false)
+  tournamentId String?       @map("tournament_id")
+  matchId      String?       @map("match_id")
+  authorId     String?       @map("author_id")
+  publishedAt  DateTime?     @map("published_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@map("videos")
+}
+
+enum VideoCategory {
+  TOURNAMENT
+  HIGHLIGHT
+  STREAM_VOD
+  EDUCATIONAL
+  INTERVIEW
+  PROMOTIONAL
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  MATCH_STARTING
+  MATCH_RESULT
+  TOURNAMENT_REGISTERED
+  TOURNAMENT_STARTING
+  TEAM_INVITE
+  RANK_UP
+  ORDER_STATUS
+  SYSTEM
+}
