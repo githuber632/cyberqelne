@@ -17,7 +17,7 @@ const gradientMap: Record<string, string> = {
 const defaultGradient = "from-cyber-purple/60 to-cyber-dark";
 
 export function ShopPreview() {
-  const { products } = useContentStore();
+  const { products, shopPromo } = useContentStore();
 
   const visible = products
     .filter((p) => p.featured && p.inStock)
@@ -122,36 +122,41 @@ export function ShopPreview() {
           </div>
         )}
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          viewport={{ once: true }}
-          className="mt-12 glass-card rounded-2xl p-8 relative overflow-hidden"
-        >
-          <div className="absolute inset-0 cyber-grid-bg opacity-20" />
-          <div className="absolute right-0 top-0 w-64 h-64 bg-cyber-neon/10 rounded-full blur-[80px]" />
+        {shopPromo.enabled && shopPromo.title && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="mt-12 glass-card rounded-2xl p-8 relative overflow-hidden"
+          >
+            <div className="absolute inset-0 cyber-grid-bg opacity-20" />
+            <div className="absolute right-0 top-0 w-64 h-64 bg-cyber-neon/10 rounded-full blur-[80px]" />
 
-          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-5 h-5 text-yellow-400" />
-                <span className="text-yellow-400 font-mono text-sm font-bold">СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ</span>
+            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="w-5 h-5 text-yellow-400" />
+                  <span className="text-yellow-400 font-mono text-sm font-bold">СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ</span>
+                </div>
+                <h3 className="font-display font-bold text-2xl text-white mb-2">{shopPromo.title}</h3>
+                <p className="text-gray-400">
+                  {shopPromo.description}
+                  {shopPromo.promoCode && (
+                    <> Промокод: <span className="text-cyber-neon font-mono font-bold">{shopPromo.promoCode}</span></>
+                  )}
+                </p>
               </div>
-              <h3 className="font-display font-bold text-2xl text-white mb-2">
-                Первый заказ со скидкой 20%
-              </h3>
-              <p className="text-gray-400">Используй промокод <span className="text-cyber-neon font-mono font-bold">CYBER20</span> при оформлении</p>
+              <Link
+                href={shopPromo.buttonHref || "/shop"}
+                className="flex-shrink-0 flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon rounded-xl text-white font-display font-semibold hover:shadow-neon transition-all duration-300 hover:scale-105 whitespace-nowrap"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {shopPromo.buttonText || "Открыть магазин"}
+              </Link>
             </div>
-            <Link
-              href="/shop"
-              className="flex-shrink-0 flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon rounded-xl text-white font-display font-semibold hover:shadow-neon transition-all duration-300 hover:scale-105 whitespace-nowrap"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              Открыть магазин
-            </Link>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
       </div>
     </section>
   );

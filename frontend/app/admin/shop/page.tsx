@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Edit, Trash2, Star, Search, ShoppingBag } from "lucide-react";
+import { Plus, Edit, Trash2, Star, Search, ShoppingBag, Zap } from "lucide-react";
 import { useContentStore, type Product } from "@/store/contentStore";
 import { Modal } from "@/components/admin/Modal";
 import { AdminToast } from "@/components/admin/Toast";
@@ -35,7 +35,8 @@ const emptyForm: Omit<Product, "id"> = {
 };
 
 export default function AdminShopPage() {
-  const { products, addProduct, updateProduct, deleteProduct } = useContentStore();
+  const { products, addProduct, updateProduct, deleteProduct, shopPromo, updateShopPromo } = useContentStore();
+  const [promoForm, setPromoForm] = useState({ ...shopPromo });
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -68,8 +69,56 @@ export default function AdminShopPage() {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  function savePromo() {
+    updateShopPromo(promoForm);
+    showToast("✓ Промо-баннер сохранён");
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Промо-баннер */}
+      <div className="glass-card rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-9 h-9 bg-yellow-400/20 border border-yellow-400/40 rounded-xl flex items-center justify-center">
+            <Zap className="w-4 h-4 text-yellow-400" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-white text-lg">Промо-баннер магазина</h2>
+            <p className="text-gray-500 text-xs font-mono">Показывается внизу секции магазина на главной</p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-gray-400 text-sm">Активен</span>
+            <button
+              onClick={() => setPromoForm((f) => ({ ...f, enabled: !f.enabled }))}
+              className={`w-10 h-5 rounded-full transition-colors ${promoForm.enabled ? "bg-cyber-neon" : "bg-gray-700"} relative`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${promoForm.enabled ? "translate-x-5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="Заголовок">
+            <Input value={promoForm.title} onChange={(e) => setPromoForm((f) => ({ ...f, title: e.target.value }))} placeholder="Первый заказ со скидкой 20%" />
+          </FormField>
+          <FormField label="Описание">
+            <Input value={promoForm.description} onChange={(e) => setPromoForm((f) => ({ ...f, description: e.target.value }))} placeholder="Используй промокод при оформлении" />
+          </FormField>
+          <FormField label="Промокод">
+            <Input value={promoForm.promoCode} onChange={(e) => setPromoForm((f) => ({ ...f, promoCode: e.target.value }))} placeholder="CYBER20" />
+          </FormField>
+          <FormField label="Текст кнопки">
+            <Input value={promoForm.buttonText} onChange={(e) => setPromoForm((f) => ({ ...f, buttonText: e.target.value }))} placeholder="Открыть магазин" />
+          </FormField>
+          <FormField label="Ссылка кнопки">
+            <Input value={promoForm.buttonHref} onChange={(e) => setPromoForm((f) => ({ ...f, buttonHref: e.target.value }))} placeholder="/shop" />
+          </FormField>
+        </div>
+        <button onClick={savePromo} className="mt-4 px-6 py-2.5 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon rounded-xl text-white font-semibold text-sm hover:shadow-neon transition-all">
+          Сохранить баннер
+        </button>
+      </div>
+
+      {/* Список товаров */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display font-black text-2xl text-white">Управление магазином</h1>

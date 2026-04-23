@@ -46,7 +46,7 @@ export default function RegisterPage() {
     resolver: zodResolver(schema),
   });
 
-  const applyUser = (profile: { uid: string; name: string; email: string; avatar: string; role: "user" | "moderator" | "admin"; rating: number }) => {
+  const applyUser = (profile: { uid: string; name: string; email: string; avatar: string; role: "user" | "moderator" | "admin" | "ceo"; rating: number }) => {
     setUser({ id: profile.uid, nickname: profile.name, email: profile.email, avatar: profile.avatar || undefined, role: profile.role, rating: profile.rating }, profile.uid);
   };
 
@@ -75,8 +75,10 @@ export default function RegisterPage() {
     setErrorMsg("");
     try {
       const profile = await loginWithGoogle();
-      applyUser(profile);
-      router.push("/dashboard");
+      if (profile) {
+        applyUser(profile);
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? "";
       if (code === "auth/popup-closed-by-user") setErrorMsg("Окно входа закрыто.");

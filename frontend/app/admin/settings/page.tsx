@@ -60,6 +60,41 @@ export default function AdminSettingsPage() {
             onChange={(v) => setF("logoUrl" as keyof typeof form, v as never)}
           />
 
+          {form.logoUrl && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">
+                  Размер логотипа
+                </label>
+                <span className="text-cyber-neon font-mono text-sm font-bold">{form.logoHeight ?? 40}px</span>
+              </div>
+              <input
+                type="range"
+                min={24}
+                max={120}
+                step={2}
+                value={form.logoHeight ?? 40}
+                onChange={(e) => setF("logoHeight" as keyof typeof form, Number(e.target.value) as never)}
+                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-purple-500"
+                style={{ background: `linear-gradient(to right, #a855f7 0%, #a855f7 ${((( form.logoHeight ?? 40) - 24) / (120 - 24)) * 100}%, #2d1b4e ${((( form.logoHeight ?? 40) - 24) / (120 - 24)) * 100}%, #2d1b4e 100%)` }}
+              />
+              <div className="flex justify-between text-xs text-gray-600 font-mono">
+                <span>Маленький</span>
+                <span>Большой</span>
+              </div>
+              {/* Превью */}
+              <div className="mt-3 p-4 bg-cyber-black/60 rounded-xl border border-cyber-glass-border flex items-center gap-3">
+                <span className="text-gray-500 text-xs font-mono">Превью:</span>
+                <img
+                  src={form.logoUrl}
+                  alt="logo preview"
+                  style={{ height: `${form.logoHeight ?? 40}px` }}
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          )}
+
           <FormField label="Слоган">
             <Input value={form.tagline} onChange={(e) => setF("tagline", e.target.value)} placeholder="Главная киберспортивная платформа СНГ" />
           </FormField>

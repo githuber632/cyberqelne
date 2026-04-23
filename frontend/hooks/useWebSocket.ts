@@ -78,6 +78,6 @@ export function useLiveEvents(onEvent?: (event: string, data: any) => void) {
       onEvent?.(event, data);
     });
 
-    return () => socket.disconnect();
+    return () => { socket.disconnect(); };
   }, []);
 }

@@ -41,13 +41,13 @@ export default function LoginPage() {
 
   // Обрабатываем результат Google redirect (мобильные)
   useEffect(() => {
-    setGoogleLoading(true);
+    const timeout = setTimeout(() => setGoogleLoading(false), 5000);
     getGoogleRedirectResult()
       .then((profile) => {
         if (profile) applyUser(profile);
       })
       .catch(() => {})
-      .finally(() => setGoogleLoading(false));
+      .finally(() => { clearTimeout(timeout); setGoogleLoading(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -205,7 +205,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={isLoading || googleLoading}
+              disabled={isLoading}
               className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon rounded-xl text-white font-display font-bold text-sm uppercase tracking-widest active:scale-[0.98] transition-all duration-150 hover:shadow-neon disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoading ? (

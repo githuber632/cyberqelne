@@ -115,25 +115,32 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              {siteSettings.logoUrl ? (
-                <img src={siteSettings.logoUrl} alt="logo" className="w-10 h-10 rounded-lg object-cover shadow-neon" />
-              ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-cyber-purple-bright to-cyber-neon-pink rounded-lg flex items-center justify-center shadow-neon group-hover:shadow-neon transition-shadow duration-300">
-                  <span className="font-display font-black text-white text-sm">{siteSettings.logoText || "CQ"}</span>
+          <Link href="/" className="flex items-center group">
+            {siteSettings.logoUrl ? (
+              <img
+                src={siteSettings.logoUrl}
+                alt={siteSettings.siteName || "CyberQELN"}
+                style={{ height: `${siteSettings.logoHeight ?? 40}px` }}
+                className="w-auto object-contain transition-opacity duration-300 group-hover:opacity-80"
+              />
+            ) : (
+              <>
+                <div className="relative mr-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-cyber-purple-bright to-cyber-neon-pink rounded-lg flex items-center justify-center shadow-neon">
+                    <span className="font-display font-black text-white text-sm">{siteSettings.logoText || "CQ"}</span>
+                  </div>
+                  <div className="absolute -inset-1 bg-gradient-to-br from-cyber-purple-bright to-cyber-neon-pink rounded-lg opacity-0 group-hover:opacity-30 blur transition-opacity duration-300" />
                 </div>
-              )}
-              <div className="absolute -inset-1 bg-gradient-to-br from-cyber-purple-bright to-cyber-neon-pink rounded-lg opacity-0 group-hover:opacity-30 blur transition-opacity duration-300" />
-            </div>
-            <div>
-              <span className="font-display font-black text-xl text-gradient-cyber tracking-wider">
-                {(siteSettings.siteName || "CyberQELN").slice(0, 5).toUpperCase()}
-              </span>
-              <span className="font-display font-black text-xl text-white">
-                {(siteSettings.siteName || "CyberQELN").slice(5).toUpperCase()}
-              </span>
-            </div>
+                <div>
+                  <span className="font-display font-black text-xl text-gradient-cyber tracking-wider">
+                    {(siteSettings.siteName || "CyberQELN").slice(0, 5).toUpperCase()}
+                  </span>
+                  <span className="font-display font-black text-xl text-white">
+                    {(siteSettings.siteName || "CyberQELN").slice(5).toUpperCase()}
+                  </span>
+                </div>
+              </>
+            )}
           </Link>
 
           {/* Desktop Navigation */}

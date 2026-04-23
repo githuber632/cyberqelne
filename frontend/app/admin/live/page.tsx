@@ -127,7 +127,7 @@ export default function AdminLivePage() {
                   ].map(({ label, key, placeholder }) => (
                     <div key={key}>
                       <label className="block text-xs font-mono font-bold text-gray-400 uppercase tracking-widest mb-1.5">{label}</label>
-                      <input value={(form as Record<string, string>)[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder}
+                      <input value={(form as unknown as Record<string, string>)[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder}
                         className="w-full bg-cyber-purple/20 border border-cyber-glass-border rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyber-neon/50 font-mono" />
                     </div>
                   ))}
@@ -142,7 +142,7 @@ export default function AdminLivePage() {
                       { label: "Показывать на сайте", key: "active" },
                     ].map(({ label, key }) => (
                       <label key={key} className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={(form as Record<string, boolean>)[key]}
+                        <input type="checkbox" checked={(form as unknown as Record<string, boolean>)[key]}
                           onChange={(e) => setForm({ ...form, [key]: e.target.checked })}
                           className="w-4 h-4 rounded accent-purple-500" />
                         <span className="text-sm text-gray-300 font-mono">{label}</span>

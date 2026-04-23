@@ -45,7 +45,7 @@ export function UserMenu({ user }: UserMenuProps) {
     ...(user.role === "admin" || user.role === "moderator" || user.role === "ceo"
       ? [{ label: "Админ панель", icon: Shield, href: "/admin" }]
       : []),
-    { label: "Настройки", icon: Settings, href: "/dashboard" },
+    { label: "Настройки", icon: Settings, href: "/dashboard/settings" },
   ];
 
   return (
@@ -85,7 +85,7 @@ export function UserMenu({ user }: UserMenuProps) {
             {/* Menu items */}
             {menuItems.map((item) => (
               <Link
-                key={item.href}
+                key={item.label}
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-cyber-neon/10 transition-all duration-150"

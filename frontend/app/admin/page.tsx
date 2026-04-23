@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Users, Trophy, ShoppingBag, Newspaper, Play, Gamepad2,
   TrendingUp, AlertCircle, CheckCircle, XCircle, Shield,
-  Eye, Edit, Trash2, UserCog, Home, Settings, ArrowRight,
+  Eye, Edit, Trash2, UserCog, Home, Settings, ArrowRight, BarChart2,
 } from "lucide-react";
 import { useContentStore } from "@/store/contentStore";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,7 @@ export default function AdminDashboard() {
     { label: "Новый турнир", desc: "Создать турнир", icon: Trophy, href: "/admin/tournaments", color: "from-yellow-600 to-orange-600" },
     { label: "Добавить товар", desc: "В магазин", icon: ShoppingBag, href: "/admin/shop", color: "from-green-600 to-teal-600" },
     { label: "Управление играми", desc: "Какие игры на платформе", icon: Gamepad2, href: "/admin/games", color: "from-pink-600 to-rose-600" },
+    { label: "Статистика главной", desc: "Цифры под hero-секцией", icon: BarChart2, href: "/admin/stats", color: "from-cyan-600 to-teal-600" },
     { label: "Настройки сайта", desc: "Название, цвета, баннер", icon: Settings, href: "/admin/settings", color: "from-gray-600 to-slate-600" },
   ];
 

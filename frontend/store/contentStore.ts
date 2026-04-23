@@ -93,6 +93,7 @@ export interface SiteSettings {
   tagline: string;
   logoText: string;
   logoUrl: string;
+  logoHeight: number;
   primaryColor: string;
   accentColor: string;
   maintenanceMode: boolean;
@@ -123,6 +124,26 @@ export interface CommunityStat {
   value: string;
   iconName: "Users" | "Trophy" | "Star" | "MessageCircle";
   color: string;
+}
+
+export interface StatItem {
+  id: string;
+  label: string;
+  value: number;
+  suffix: string;
+  prefix?: string;
+  icon: "Users" | "Trophy" | "DollarSign" | "Gamepad2" | "Globe" | "Zap" | "Star" | "Shield";
+  color: string;
+  description: string;
+}
+
+export interface ShopPromo {
+  enabled: boolean;
+  title: string;
+  description: string;
+  promoCode: string;
+  buttonText: string;
+  buttonHref: string;
 }
 
 export interface LiveBanner {
@@ -224,6 +245,17 @@ const initialGames: Game[] = [
     color: "#22d3ee",
   },
 ];
+
+const initialStats: StatItem[] = [];
+
+const initialShopPromo: ShopPromo = {
+  enabled: false,
+  title: "",
+  description: "",
+  promoCode: "",
+  buttonText: "Открыть магазин",
+  buttonHref: "/shop",
+};
 
 const initialTeams: Team[] = [];
 
@@ -362,6 +394,8 @@ interface ContentState {
   games: Game[];
   teams: Team[];
   users: SiteUser[];
+  homeStats: StatItem[];
+  shopPromo: ShopPromo;
   heroSettings: HeroSettings;
   siteSettings: SiteSettings;
   communitySettings: CommunitySettings;
@@ -403,6 +437,14 @@ interface ContentState {
   deleteUser: (id: string) => void;
   addUser: (item: Omit<SiteUser, "id">) => void;
 
+  // Stats
+  addStat: (item: Omit<StatItem, "id">) => void;
+  updateStat: (id: string, data: Partial<StatItem>) => void;
+  deleteStat: (id: string) => void;
+
+  // ShopPromo
+  updateShopPromo: (data: Partial<ShopPromo>) => void;
+
   // Settings
   updateHeroSettings: (data: Partial<HeroSettings>) => void;
   updateSiteSettings: (data: Partial<SiteSettings>) => void;
@@ -441,6 +483,8 @@ export const useContentStore = create<ContentState>()(
       games: initialGames,
       teams: initialTeams,
       users: initialUsers,
+      homeStats: initialStats,
+      shopPromo: initialShopPromo,
 
       heroSettings: {
         featuredTournamentId: "t1",
@@ -457,6 +501,7 @@ export const useContentStore = create<ContentState>()(
         tagline: "Главная киберспортивная платформа СНГ",
         logoText: "CQ",
         logoUrl: "",
+        logoHeight: 40,
         primaryColor: "#a855f7",
         accentColor: "#22d3ee",
         maintenanceMode: false,
@@ -508,6 +553,14 @@ export const useContentStore = create<ContentState>()(
       addUser: (item) => set((s) => ({ users: [{ ...item, id: uid() }, ...s.users] })),
       updateUser: (id, data) => set((s) => ({ users: s.users.map((u) => u.id === id ? { ...u, ...data } : u) })),
       deleteUser: (id) => set((s) => ({ users: s.users.filter((u) => u.id !== id) })),
+
+      // Stats actions
+      addStat: (item) => set((s) => ({ homeStats: [...s.homeStats, { ...item, id: uid() }] })),
+      updateStat: (id, data) => set((s) => ({ homeStats: s.homeStats.map((st) => st.id === id ? { ...st, ...data } : st) })),
+      deleteStat: (id) => set((s) => ({ homeStats: s.homeStats.filter((st) => st.id !== id) })),
+
+      // ShopPromo actions
+      updateShopPromo: (data) => set((s) => ({ shopPromo: { ...s.shopPromo, ...data } })),
 
       // Settings actions
       updateHeroSettings: (data) => set((s) => ({ heroSettings: { ...s.heroSettings, ...data } })),
