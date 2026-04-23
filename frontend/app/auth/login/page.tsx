@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2, Zap, LogIn, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, Zap, LogIn, X, Ghost } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { loginUser, loginWithGoogle, getGoogleRedirectResult } from "@/lib/firebaseRegister";
 import { cn } from "@/lib/utils";
@@ -70,6 +70,14 @@ export default function LoginPage() {
       }
       setIsLoading(false);
     }
+  };
+
+  const handleGuest = () => {
+    setUser(
+      { id: "guest-demo", nickname: "Гость", email: "guest@demo.local", role: "moderator", rating: 1337 },
+      "guest-demo-token"
+    );
+    router.push("/dashboard");
   };
 
   const handleGoogle = async () => {
@@ -136,6 +144,21 @@ export default function LoginPage() {
               </>
             )}
           </button>
+
+          {/* Guest button */}
+          <button
+            type="button"
+            onClick={handleGuest}
+            disabled={isLoading || googleLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 mb-3 rounded-xl text-gray-400 font-semibold border border-dashed border-cyber-glass-border hover:border-cyber-neon/40 hover:text-white hover:bg-white/5 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Ghost className="w-5 h-5" />
+            Войти как гость
+          </button>
+
+          <p className="text-center text-gray-700 text-xs font-mono mb-4">
+            Демо-доступ · все функции включая админку
+          </p>
 
           <div className="flex items-center gap-4 mb-6">
             <div className="flex-1 h-px bg-cyber-glass-border" />

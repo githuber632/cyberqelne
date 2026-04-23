@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2, UserPlus, X, CheckCircle2, User, Mail, Lock, Zap } from "lucide-react";
+import { Eye, EyeOff, Loader2, UserPlus, X, CheckCircle2, User, Mail, Lock, Zap, Ghost } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { registerUser, loginWithGoogle, type RegisterStep } from "@/lib/firebaseRegister";
 import { cn } from "@/lib/utils";
@@ -91,6 +91,14 @@ export default function RegisterPage() {
 
   const isLoading = (step !== "idle" && step !== "error" && !success);
 
+  const handleGuest = () => {
+    setUser(
+      { id: "guest-demo", nickname: "Гость", email: "guest@demo.local", role: "moderator", rating: 1337 },
+      "guest-demo-token"
+    );
+    router.push("/dashboard");
+  };
+
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
@@ -158,6 +166,23 @@ export default function RegisterPage() {
               </>
             )}
           </motion.button>
+
+          {/* Guest button */}
+          <motion.button
+            type="button"
+            onClick={handleGuest}
+            disabled={isLoading || googleLoading}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            className="w-full flex items-center justify-center gap-3 py-3 mb-3 rounded-xl text-gray-400 font-semibold border border-dashed border-cyber-glass-border hover:border-cyber-neon/40 hover:text-white hover:bg-white/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Ghost className="w-5 h-5" />
+            Войти как гость
+          </motion.button>
+
+          <p className="text-center text-gray-700 text-xs font-mono mb-4">
+            Демо-доступ · все функции включая админку
+          </p>
 
           {/* Divider */}
           <div className="flex items-center gap-4 mb-6">
