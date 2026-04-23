@@ -53,11 +53,5 @@
     "eslint": "^8.57.1",
     "eslint-config-next": "15.0.0",
     "postcss": "^8.4.47"
-},
-"scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "export": "next export",
-  "start": "next start"
-}
+  }
 }
