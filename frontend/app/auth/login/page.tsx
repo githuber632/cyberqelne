@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const { setUser } = useAuthStore();
   const router = useRouter();
@@ -73,11 +74,12 @@ export default function LoginPage() {
   };
 
   const handleGuest = () => {
+    setGuestLoading(true);
     setUser(
       { id: "guest-demo", nickname: "Гость", email: "guest@demo.local", role: "moderator", rating: 1337 },
       "guest-demo-token"
     );
-    router.push("/dashboard");
+    window.location.href = "/dashboard";
   };
 
   const handleGoogle = async () => {
@@ -149,11 +151,15 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={handleGuest}
-            disabled={isLoading || googleLoading}
+            disabled={isLoading || googleLoading || guestLoading}
             className="w-full flex items-center justify-center gap-3 py-3 mb-3 rounded-xl text-gray-400 font-semibold border border-dashed border-cyber-glass-border hover:border-cyber-neon/40 hover:text-white hover:bg-white/5 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Ghost className="w-5 h-5" />
-            Войти как гость
+            {guestLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Ghost className="w-5 h-5" />
+            )}
+            {guestLoading ? "Входим..." : "Войти как гость"}
           </button>
 
           <p className="text-center text-gray-700 text-xs font-mono mb-4">

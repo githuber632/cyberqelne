@@ -96,7 +96,7 @@ export default function RegisterPage() {
       { id: "guest-demo", nickname: "Гость", email: "guest@demo.local", role: "moderator", rating: 1337 },
       "guest-demo-token"
     );
-    router.push("/dashboard");
+    window.location.href = "/dashboard";
   };
 
   if (success) {
