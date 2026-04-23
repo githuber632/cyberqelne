@@ -14,6 +14,7 @@ function AuthSync() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
+        if (useAuthStore.getState().user?.id === "guest-demo") return;
         logout();
         return;
       }
