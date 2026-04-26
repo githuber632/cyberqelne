@@ -119,7 +119,7 @@ export function ImageField({
   label = "Изображение",
   placeholder = "https://... или оставь пустым",
 }: {
-  value: string;
+  value?: string;
   onChange: (v: string) => void;
   label?: string;
   placeholder?: string;
@@ -135,14 +135,14 @@ export function ImageField({
     e.target.value = "";
   }
 
-  const isImage = value.startsWith("data:") || value.startsWith("http");
+  const isImage = (value ?? "").startsWith("data:") || (value ?? "").startsWith("http");
 
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-300">{label}</label>
       <div className="flex gap-2">
         <Input
-          value={isImage ? "" : value}
+          value={isImage ? "" : (value ?? "")}
           onChange={(e) => onChange(e.target.value)}
           placeholder={isImage ? "Файл загружен" : placeholder}
           readOnly={isImage}

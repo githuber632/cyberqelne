@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { CreateTournamentDto } from "./dto/create-tournament.dto";
-import { TournamentStatus } from "@prisma/client";
+import { TournamentStatus, TournamentFormat } from "@prisma/client";
 
 @Injectable()
 export class TournamentsService {
@@ -76,13 +76,19 @@ export class TournamentsService {
   async create(dto: CreateTournamentDto, adminId: string) {
     const slug = this.generateSlug(dto.title);
 
+    const { prizePool, entryFee, registrationStartAt, registrationEndAt, startDate, endDate, format, region: _region, ...rest } = dto;
     return this.prisma.tournament.create({
       data: {
-        ...dto,
+        ...rest,
+        ...(format ? { format: format as TournamentFormat } : {}),
         slug,
         organizerId: adminId,
-        prizePool: BigInt(dto.prizePool),
-        entryFee: BigInt(dto.entryFee || 0),
+        prizePool: BigInt(prizePool),
+        entryFee: BigInt(entryFee || 0),
+        registrationStartAt: new Date(registrationStartAt),
+        registrationEndAt: new Date(registrationEndAt),
+        startDate: new Date(startDate),
+        endDate: endDate ? new Date(endDate) : new Date(startDate),
       },
     });
   }

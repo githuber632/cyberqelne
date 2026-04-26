@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, User, Settings, LogOut, Shield, Trophy } from "lucide-react";
+import { User, LogOut, Shield, Trophy } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
@@ -39,13 +39,11 @@ export function UserMenu({ user }: UserMenuProps) {
   if (!user) return null;
 
   const menuItems = [
-    { label: "Дашборд", icon: LayoutDashboard, href: "/dashboard" },
-    { label: "Профиль", icon: User, href: `/players/${encodeURIComponent(user.nickname)}` },
+    { label: "Профиль", icon: User, href: "/dashboard" },
     { label: "Мои турниры", icon: Trophy, href: "/tournaments" },
     ...(user.role === "admin" || user.role === "moderator" || user.role === "ceo"
       ? [{ label: "Админ панель", icon: Shield, href: "/admin" }]
       : []),
-    { label: "Настройки", icon: Settings, href: "/dashboard/settings" },
   ];
 
   return (

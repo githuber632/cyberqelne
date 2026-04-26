@@ -23,7 +23,7 @@ export default function AdminDashboard() {
     { label: "Турниров", value: tournaments.length, sub: `${activeTournaments} активных`, icon: Trophy, color: "text-yellow-400", href: "/admin/tournaments" },
     { label: "Товаров", value: products.length, sub: "в магазине", icon: ShoppingBag, color: "text-green-400", href: "/admin/shop" },
     { label: "Новостей", value: news.length, sub: `${publishedNews} опубликовано`, icon: Newspaper, color: "text-cyber-neon-pink", href: "/admin/news" },
-    { label: "Видео", value: videos.length, sub: "в медиатеке", icon: Play, color: "text-cyan-400", href: "/admin/media" },
+    { label: "Видео", value: videos.length, sub: "в медиатеке", icon: Play, color: "text-cyber-neon-pink", href: "/admin/media" },
     { label: "Заблокировано", value: bannedUsers, sub: "пользователей", icon: AlertCircle, color: "text-red-400", href: "/admin/users" },
   ];
 

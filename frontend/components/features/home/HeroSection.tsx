@@ -1,12 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 import Link from "next/link";
-import { Trophy, Users, Play, ChevronRight, Zap } from "lucide-react";
-import { useContentStore } from "@/store/contentStore";
+import { Trophy, Play, ChevronRight } from "lucide-react";
+import { useContentStore, useMediaBlobStore } from "@/store/contentStore";
+import { loadVideoDB } from "@/lib/videoDB";
 
 export function HeroSection() {
   const { heroSettings, siteSettings } = useContentStore();
+  const { heroBlobVideo, setHeroBlobVideo } = useMediaBlobStore();
+
+  // On mount: restore video from IndexedDB if not already in memory
+  useEffect(() => {
+    if (heroBlobVideo) return;
+    loadVideoDB("hero-bg").then((url) => {
+      if (url) setHeroBlobVideo(url);
+    });
+  }, []);
+
+  const activeVideo = heroBlobVideo || heroSettings.backgroundVideo || "";
 
   const headline = heroSettings.headline || "CYBERQELN";
   const subheadline = heroSettings.subheadline || "ESPORTS ECOSYSTEM";
@@ -14,16 +27,32 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-cyber-black">
-      {/* Background image — admin overrides static default */}
+      {/* Background — video takes priority over image */}
       <div className="absolute inset-0">
-        <img
-          src={heroSettings.backgroundImage || "/images/hero-bg.jpg"}
-          className="w-full h-full object-cover object-center"
-          alt=""
-          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        {activeVideo ? (
+          <video
+            key={activeVideo}
+            src={activeVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover object-center"
+          />
+        ) : (
+          <img
+            src={heroSettings.backgroundImage || "/images/hero-bg.jpg"}
+            className="w-full h-full object-cover object-center"
+            alt=""
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        )}
+        <div
+          className="absolute inset-0 bg-cyber-black"
+          style={{ opacity: (heroSettings.backgroundOverlay ?? 60) / 100 }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-cyber-black/60 via-cyber-black/40 to-cyber-black/90" />
-        <div className="absolute inset-0 bg-gradient-to-r from-cyber-black/70 via-transparent to-cyber-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-cyber-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-r from-cyber-black/60 via-transparent to-cyber-black/40" />
       </div>
 
       {/* Background grid overlay */}
@@ -39,7 +68,7 @@ export function HeroSection() {
         <motion.div
           animate={{ scale: [1.2, 1, 1.2], opacity: [0.1, 0.2, 0.1] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-          className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] bg-cyber-neon-blue rounded-full blur-[100px]"
+          className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] bg-cyber-neon-pink rounded-full blur-[100px]"
         />
         <motion.div
           animate={{ opacity: [0.05, 0.15, 0.05] }}
@@ -74,24 +103,47 @@ export function HeroSection() {
               </motion.div>
             )}
 
-            <motion.h1
+            <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
-              className="font-display font-black leading-none mb-4"
+              className="mb-4"
             >
-              <span className="block text-5xl sm:text-6xl lg:text-7xl text-white">
-                {headline.length > 6 ? headline.slice(0, Math.ceil(headline.length / 2)) : headline}
-              </span>
-              {headline.length > 3 && (
-                <span className="block text-5xl sm:text-6xl lg:text-7xl text-gradient-cyber">
-                  {headline.length > 6 ? headline.slice(Math.ceil(headline.length / 2)) : ""}
-                </span>
+              {heroSettings.heroMode === "logo" && heroSettings.heroLogoUrl ? (
+                <img
+                  src={heroSettings.heroLogoUrl}
+                  alt={siteSettings.siteName || "CyberQELN"}
+                  style={{
+                    height: `${heroSettings.heroLogoHeight ?? 120}px`,
+                    transform: `translate(${heroSettings.heroLogoOffsetX ?? 0}px, ${heroSettings.heroLogoOffsetY ?? 0}px)`,
+                  }}
+                  className="object-contain mb-2"
+                />
+              ) : (
+                <h1 className="font-display font-black leading-none">
+                  <span
+                    className="block text-5xl sm:text-6xl lg:text-7xl"
+                    style={{ color: heroSettings.headlineColor || "#ffffff" }}
+                  >
+                    {headline.length > 6 ? headline.slice(0, Math.ceil(headline.length / 2)) : headline}
+                  </span>
+                  {headline.length > 3 && (
+                    <span
+                      className="block text-5xl sm:text-6xl lg:text-7xl"
+                      style={{ color: heroSettings.headlineColor2 || "#a855f7" }}
+                    >
+                      {headline.length > 6 ? headline.slice(Math.ceil(headline.length / 2)) : ""}
+                    </span>
+                  )}
+                </h1>
               )}
-              <span className="block text-xl sm:text-2xl lg:text-3xl text-gray-400 font-light mt-2 tracking-widest">
+              <span
+                className="block text-xl sm:text-2xl lg:text-3xl font-light mt-2 tracking-widest font-display"
+                style={{ color: heroSettings.subheadlineColor || "#9ca3af" }}
+              >
                 {subheadline}
               </span>
-            </motion.h1>
+            </motion.div>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -114,29 +166,11 @@ export function HeroSection() {
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link href="/media" className="group flex items-center gap-2 px-8 py-4 glass-card rounded-xl text-white font-display font-semibold hover:border-cyber-neon/50 transition-all duration-300">
-                <Play className="w-5 h-5 text-cyber-neon-blue" />
+                <Play className="w-5 h-5 text-cyber-neon-pink" />
                 Смотреть Live
               </Link>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="grid grid-cols-3 gap-6"
-            >
-              {[
-                { label: "Игроков", value: "12,400+", icon: Users },
-                { label: "Турниров", value: "340+", icon: Trophy },
-                { label: "Призовой", value: "500M+", icon: Zap },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <stat.icon className="w-5 h-5 text-cyber-neon mx-auto mb-1" />
-                  <div className="font-display font-bold text-xl text-white">{stat.value}</div>
-                  <div className="text-xs text-gray-500 font-mono">{stat.label}</div>
-                </div>
-              ))}
-            </motion.div>
           </div>
 
         </div>
@@ -148,7 +182,7 @@ export function HeroSection() {
           transition={{ delay: 1.5 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
         >
-          <span className="text-xs text-gray-600 font-mono tracking-widest">SCROLL</span>
+          <span className="text-xs text-gray-600 font-sans tracking-widest">SCROLL</span>
           <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-px h-8 bg-gradient-to-b from-cyber-neon to-transparent" />
         </motion.div>
       </div>

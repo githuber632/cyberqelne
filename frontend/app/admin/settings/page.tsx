@@ -8,7 +8,12 @@ import { AdminToast } from "@/components/admin/Toast";
 
 export default function AdminSettingsPage() {
   const { siteSettings, updateSiteSettings } = useContentStore();
-  const [form, setForm] = useState({ ...siteSettings, logoUrl: siteSettings.logoUrl || "" });
+  const [form, setForm] = useState({
+    ...siteSettings,
+    logoUrl: siteSettings.logoUrl || "",
+    logoOffsetX: siteSettings.logoOffsetX ?? 0,
+    logoOffsetY: siteSettings.logoOffsetY ?? 0,
+  });
   const [toast, setToast] = useState({ show: false, message: "" });
   const [clearConfirm, setClearConfirm] = useState(false);
 
@@ -60,12 +65,14 @@ export default function AdminSettingsPage() {
             onChange={(v) => setF("logoUrl" as keyof typeof form, v as never)}
           />
 
-          {form.logoUrl && (
-            <div className="space-y-2">
+          {/* Настройки размера и позиции логотипа */}
+          <div className="glass-card rounded-xl p-4 border border-cyber-purple/30 space-y-5">
+            <h3 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">Размер и позиция логотипа</h3>
+
+            {/* Размер */}
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">
-                  Размер логотипа
-                </label>
+                <label className="text-sm text-gray-300">Размер</label>
                 <span className="text-cyber-neon font-mono text-sm font-bold">{form.logoHeight ?? 40}px</span>
               </div>
               <input
@@ -76,24 +83,74 @@ export default function AdminSettingsPage() {
                 value={form.logoHeight ?? 40}
                 onChange={(e) => setF("logoHeight" as keyof typeof form, Number(e.target.value) as never)}
                 className="w-full h-2 rounded-full appearance-none cursor-pointer accent-purple-500"
-                style={{ background: `linear-gradient(to right, #a855f7 0%, #a855f7 ${((( form.logoHeight ?? 40) - 24) / (120 - 24)) * 100}%, #2d1b4e ${((( form.logoHeight ?? 40) - 24) / (120 - 24)) * 100}%, #2d1b4e 100%)` }}
               />
               <div className="flex justify-between text-xs text-gray-600 font-mono">
-                <span>Маленький</span>
-                <span>Большой</span>
-              </div>
-              {/* Превью */}
-              <div className="mt-3 p-4 bg-cyber-black/60 rounded-xl border border-cyber-glass-border flex items-center gap-3">
-                <span className="text-gray-500 text-xs font-mono">Превью:</span>
-                <img
-                  src={form.logoUrl}
-                  alt="logo preview"
-                  style={{ height: `${form.logoHeight ?? 40}px` }}
-                  className="object-contain"
-                />
+                <span>24px (маленький)</span>
+                <span>120px (большой)</span>
               </div>
             </div>
-          )}
+
+            {/* Сдвиг по горизонтали */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-gray-300">Сдвиг по горизонтали</label>
+                <span className="text-cyber-neon font-mono text-sm font-bold">{form.logoOffsetX ?? 0}px</span>
+              </div>
+              <input
+                type="range"
+                min={-60}
+                max={60}
+                step={1}
+                value={form.logoOffsetX ?? 0}
+                onChange={(e) => setF("logoOffsetX" as keyof typeof form, Number(e.target.value) as never)}
+                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-purple-500"
+              />
+              <div className="flex justify-between text-xs text-gray-600 font-mono">
+                <span>← влево</span>
+                <span>вправо →</span>
+              </div>
+            </div>
+
+            {/* Сдвиг по вертикали */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-gray-300">Сдвиг по вертикали</label>
+                <span className="text-cyber-neon font-mono text-sm font-bold">{form.logoOffsetY ?? 0}px</span>
+              </div>
+              <input
+                type="range"
+                min={-30}
+                max={30}
+                step={1}
+                value={form.logoOffsetY ?? 0}
+                onChange={(e) => setF("logoOffsetY" as keyof typeof form, Number(e.target.value) as never)}
+                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-purple-500"
+              />
+              <div className="flex justify-between text-xs text-gray-600 font-mono">
+                <span>↑ вверх</span>
+                <span>вниз ↓</span>
+              </div>
+            </div>
+
+            {/* Превью */}
+            {form.logoUrl && (
+              <div className="p-3 bg-cyber-black/60 rounded-xl border border-cyber-glass-border overflow-hidden">
+                <span className="text-gray-500 text-xs font-mono block mb-2">Превью в навбаре:</span>
+                <div className="flex items-center gap-2 bg-[#0d0118] rounded-lg px-4 py-2">
+                  <img
+                    src={form.logoUrl}
+                    alt="logo preview"
+                    style={{
+                      height: `${form.logoHeight ?? 40}px`,
+                      transform: `translate(${form.logoOffsetX ?? 0}px, ${form.logoOffsetY ?? 0}px)`,
+                    }}
+                    className="object-contain transition-transform"
+                  />
+                  <span className="text-white font-bold text-lg font-display">{form.siteName}</span>
+                </div>
+              </div>
+            )}
+          </div>
 
           <FormField label="Слоган">
             <Input value={form.tagline} onChange={(e) => setF("tagline", e.target.value)} placeholder="Главная киберспортивная платформа СНГ" />

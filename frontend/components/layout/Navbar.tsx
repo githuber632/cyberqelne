@@ -93,20 +93,20 @@ export function Navbar() {
           transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
           className="flex items-center gap-8 whitespace-nowrap"
         >
-          <span className="flex items-center gap-2 text-xs text-cyber-neon font-mono">
+          <span className="flex items-center gap-2 text-xs text-cyber-neon font-sans">
             <Zap className="w-3 h-3 animate-pulse" />
             LIVE: CyberQELN Championship Season 2 — Финал через 2 часа
           </span>
           <span className="text-xs text-gray-500">•</span>
-          <span className="text-xs text-gray-400 font-mono">
+          <span className="text-xs text-gray-400 font-sans">
             🏆 Team Phantom vs Shadow Force — Полуфинал
           </span>
           <span className="text-xs text-gray-500">•</span>
-          <span className="text-xs text-cyan-400 font-mono">
+          <span className="text-xs text-cyber-neon-pink font-sans">
             Новый скин "Neon Phantom" в магазине
           </span>
           <span className="text-xs text-gray-500">•</span>
-          <span className="text-xs text-gray-400 font-mono">
+          <span className="text-xs text-gray-400 font-sans">
             🎮 Открыта регистрация на квалификации Q2 2026
           </span>
         </motion.div>
@@ -120,7 +120,10 @@ export function Navbar() {
               <img
                 src={siteSettings.logoUrl}
                 alt={siteSettings.siteName || "CyberQELN"}
-                style={{ height: `${siteSettings.logoHeight ?? 40}px` }}
+                style={{
+                  height: `${siteSettings.logoHeight ?? 40}px`,
+                  transform: `translate(${siteSettings.logoOffsetX ?? 0}px, ${siteSettings.logoOffsetY ?? 0}px)`,
+                }}
                 className="w-auto object-contain transition-opacity duration-300 group-hover:opacity-80"
               />
             ) : (

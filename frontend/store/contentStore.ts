@@ -85,7 +85,19 @@ export interface HeroSettings {
   ctaText: string;
   backgroundStyle: "default" | "custom";
   backgroundImage: string;
+  backgroundVideo: string;
+  backgroundOverlay: number;
   showLiveBadge: boolean;
+  // Hero logo / title mode
+  heroMode: "text" | "logo";
+  heroLogoUrl: string;
+  heroLogoHeight: number;
+  heroLogoOffsetX: number;
+  heroLogoOffsetY: number;
+  // Text colors
+  headlineColor: string;
+  headlineColor2: string;
+  subheadlineColor: string;
 }
 
 export interface SiteSettings {
@@ -94,6 +106,8 @@ export interface SiteSettings {
   logoText: string;
   logoUrl: string;
   logoHeight: number;
+  logoOffsetX: number;
+  logoOffsetY: number;
   primaryColor: string;
   accentColor: string;
   maintenanceMode: boolean;
@@ -493,7 +507,17 @@ export const useContentStore = create<ContentState>()(
         ctaText: "Участвовать",
         backgroundStyle: "default",
         backgroundImage: "",
+        backgroundVideo: "",
+        backgroundOverlay: 60,
         showLiveBadge: true,
+        heroMode: "text",
+        heroLogoUrl: "",
+        heroLogoHeight: 120,
+        heroLogoOffsetX: 0,
+        heroLogoOffsetY: 0,
+        headlineColor: "#ffffff",
+        headlineColor2: "#a855f7",
+        subheadlineColor: "#9ca3af",
       },
 
       siteSettings: {
@@ -502,6 +526,8 @@ export const useContentStore = create<ContentState>()(
         logoText: "CQ",
         logoUrl: "",
         logoHeight: 40,
+        logoOffsetX: 0,
+        logoOffsetY: 0,
         primaryColor: "#a855f7",
         accentColor: "#22d3ee",
         maintenanceMode: false,
@@ -630,6 +656,31 @@ export const useContentStore = create<ContentState>()(
       updateFooterSocial: (id, data) => set((s) => ({ footerSettings: { ...s.footerSettings, socials: s.footerSettings.socials.map((soc) => soc.id === id ? { ...soc, ...data } : soc) } })),
       deleteFooterSocial: (id) => set((s) => ({ footerSettings: { ...s.footerSettings, socials: s.footerSettings.socials.filter((soc) => soc.id !== id) } })),
     }),
-    { name: "cyberqeln-content-v4" }
+    {
+      name: "cyberqeln-content-v4",
+      // Don't persist base64 video/image blobs — they exceed localStorage quota
+      partialize: (state) => ({
+        ...state,
+        heroSettings: {
+          ...state.heroSettings,
+          backgroundVideo: state.heroSettings.backgroundVideo?.startsWith("blob:") || state.heroSettings.backgroundVideo?.startsWith("data:")
+            ? ""
+            : (state.heroSettings.backgroundVideo ?? ""),
+          backgroundImage: state.heroSettings.backgroundImage?.startsWith("blob:")
+            ? ""
+            : (state.heroSettings.backgroundImage ?? ""),
+        },
+      }),
+    }
   )
 );
+
+// In-memory store for video blob URLs (not persisted — cleared on page refresh)
+interface MediaBlobState {
+  heroBlobVideo: string;
+  setHeroBlobVideo: (url: string) => void;
+}
+export const useMediaBlobStore = create<MediaBlobState>()((set) => ({
+  heroBlobVideo: "",
+  setHeroBlobVideo: (url) => set({ heroBlobVideo: url }),
+}));

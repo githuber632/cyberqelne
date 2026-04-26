@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Orbitron, JetBrains_Mono } from "next/font/google";
+import { Inter, Bebas_Neue, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/layout/Providers";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
@@ -10,9 +10,10 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const orbitron = Orbitron({
+const bebasNeue = Bebas_Neue({
   subsets: ["latin"],
-  variable: "--font-orbitron",
+  weight: "400",
+  variable: "--font-bebas",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -71,7 +72,7 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${inter.variable} ${orbitron.variable} ${jetbrainsMono.variable} dark`}
+      className={`${inter.variable} ${bebasNeue.variable} ${jetbrainsMono.variable} dark`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-cyber-black antialiased">
@@ -79,7 +80,7 @@ export default function RootLayout({
           {/* Ambient background glow */}
           <div className="fixed inset-0 pointer-events-none z-0">
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyber-purple opacity-10 rounded-full blur-[120px]" />
-            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-cyber-neon-blue opacity-8 rounded-full blur-[100px]" />
+            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-cyber-neon-pink opacity-8 rounded-full blur-[100px]" />
           </div>
 
           <ConditionalLayout>{children}</ConditionalLayout>

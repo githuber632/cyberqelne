@@ -2,11 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   --font-inter: 'Inter', sans-serif;
-  --font-orbitron: 'Orbitron', monospace;
+  --font-bebas: 'Bebas Neue', sans-serif;
   --font-jetbrains: 'JetBrains Mono', monospace;
 }
 
@@ -23,7 +23,8 @@
   }
 
   h1, h2, h3 {
-    font-family: var(--font-orbitron);
+    font-family: var(--font-bebas), var(--font-inter), sans-serif;
+    letter-spacing: 0.03em;
   }
 
   /* Custom scrollbar */
@@ -34,7 +35,7 @@
     background: #0a0a0f;
   }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #a855f7, #22d3ee);
+    background: linear-gradient(180deg, #a855f7, #e879f9);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -62,7 +63,7 @@
   }
 
   .neon-text-blue {
-    text-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee, 0 0 40px #22d3ee;
+    text-shadow: 0 0 10px #e879f9, 0 0 20px #e879f9, 0 0 40px #e879f9;
   }
 
   /* Cyber button */
@@ -109,7 +110,7 @@
     position: absolute;
     inset: 0;
     padding: 1px;
-    background: linear-gradient(135deg, #a855f7, #22d3ee, #e879f9);
+    background: linear-gradient(135deg, #a855f7, #e879f9, #e879f9);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -182,7 +183,7 @@
   }
 
   .text-gradient-cyber {
-    background: linear-gradient(135deg, #a855f7, #22d3ee);
+    background: linear-gradient(135deg, #a855f7, #e879f9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

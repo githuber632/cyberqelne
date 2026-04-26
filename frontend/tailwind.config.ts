@@ -19,7 +19,7 @@ const config: Config = {
           "purple-bright": "#7c3aed",
           neon: "#a855f7",
           "neon-pink": "#e879f9",
-          "neon-blue": "#22d3ee",
+          "neon-blue": "#e879f9",
           "neon-green": "#4ade80",
           "neon-yellow": "#facc15",
           glass: "rgba(255, 255, 255, 0.05)",
@@ -61,7 +61,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        display: ["var(--font-orbitron)", "monospace"],
+        display: ["var(--font-bebas)", "var(--font-inter)", "sans-serif"],
         mono: ["var(--font-jetbrains)", "monospace"],
       },
       backgroundImage: {
@@ -75,7 +75,7 @@ const config: Config = {
         "card-gradient":
           "linear-gradient(135deg, rgba(168,85,247,0.1) 0%, rgba(34,211,238,0.05) 100%)",
         "neon-border":
-          "linear-gradient(90deg, #a855f7, #22d3ee, #e879f9, #a855f7)",
+          "linear-gradient(90deg, #a855f7, #e879f9, #e879f9, #a855f7)",
       },
       backgroundSize: {
         grid: "50px 50px",

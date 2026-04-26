@@ -26,20 +26,30 @@ export function FileUpload({
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
-
     setUploading(true);
     onUploadingChange?.(true);
     setProgress(0);
+
+    // Read as base64 for preview and fallback
+    const base64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
+    });
+    setPreview(base64);
+
     try {
       const storageRef = ref(storage, `${storagePath}/${Date.now()}-${file.name}`);
       const task = uploadBytesResumable(storageRef, file);
       task.on(
         "state_changed",
         (snap) => setProgress((snap.bytesTransferred / snap.totalBytes) * 100),
-        (err) => { console.error(err); setUploading(false); onUploadingChange?.(false); },
+        () => {
+          // Firebase Storage failed — use base64 as fallback
+          onUpload(base64);
+          setUploading(false);
+          onUploadingChange?.(false);
+        },
         async () => {
           const url = await getDownloadURL(task.snapshot.ref);
           onUpload(url);
@@ -48,8 +58,9 @@ export function FileUpload({
           onUploadingChange?.(false);
         }
       );
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Firebase Storage not available — use base64 as fallback
+      onUpload(base64);
       setUploading(false);
       onUploadingChange?.(false);
     }
