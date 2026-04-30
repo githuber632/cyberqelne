@@ -88,10 +88,8 @@ export function Navbar() {
     >
       {/* Top ticker - live updates */}
       <div className="bg-cyber-purple-bright/20 border-b border-cyber-purple-bright/30 py-1 px-4 overflow-hidden">
-        <motion.div
-          animate={{ x: [0, -2000] }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-          className="flex items-center gap-8 whitespace-nowrap"
+        <div
+          className="flex items-center gap-8 whitespace-nowrap animate-[ticker_30s_linear_infinite]"
         >
           <span className="flex items-center gap-2 text-xs text-cyber-neon font-sans">
             <Zap className="w-3 h-3 animate-pulse" />
@@ -245,6 +243,7 @@ export function Navbar() {
           </div>
         </div>
       </div>
+
 
       {/* Mobile menu — full screen overlay */}
       <AnimatePresence>

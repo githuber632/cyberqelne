@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, UserCog, Ban, ShieldCheck, Trash2, Bell, X, Send, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useAuthStore } from "@/store/authStore";
 import { ROLE_COLORS, isCEO, isAdmin } from "@/lib/roles";
 
@@ -58,6 +58,12 @@ export default function AdminUsersPage() {
   async function deleteUser(uid: string) {
     setActionLoading(uid + "-delete");
     try {
+      const target = fbUsers.find((u) => u.uid === uid);
+      // Записываем в deleted_accounts чтобы показать страницу удаления
+      await setDoc(doc(db, "deleted_accounts", uid), {
+        deletedAt: new Date().toISOString(),
+        name: target?.name ?? "",
+      });
       await deleteDoc(doc(db, "users", uid));
       setFbUsers((prev) => prev.filter((u) => u.uid !== uid));
     } catch (e) { console.warn(e); }
