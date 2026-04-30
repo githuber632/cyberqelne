@@ -25,8 +25,13 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const { setUser } = useAuthStore();
+  const { setUser, isAuthenticated } = useAuthStore();
   const router = useRouter();
+
+  // Если уже авторизован — идём на дашборд (после Google redirect)
+  useEffect(() => {
+    if (isAuthenticated) router.push("/dashboard");
+  }, [isAuthenticated, router]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -100,7 +105,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden pt-20 pb-6">
       <div className="absolute inset-0 cyber-grid-bg opacity-20 pointer-events-none" />
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyber-purple/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-cyber-neon-blue/10 rounded-full blur-[100px] pointer-events-none" />

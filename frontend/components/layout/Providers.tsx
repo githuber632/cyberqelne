@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuthStore } from "@/store/authStore";
 import { useContentStore } from "@/store/contentStore";
@@ -82,22 +82,41 @@ function AuthSync() {
       }
       try {
         const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+        let profile: { name: string; email: string; avatar?: string; role: "user" | "moderator" | "admin" | "ceo"; rating: number };
+
         if (snap.exists()) {
-          const data = snap.data() as {
-            name: string; email: string; avatar?: string;
-            role: "user" | "moderator" | "admin" | "ceo"; rating: number;
+          profile = snap.data() as typeof profile;
+        } else {
+          // Новый пользователь (Google redirect) — создаём профиль
+          profile = {
+            name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "Player",
+            email: firebaseUser.email ?? "",
+            avatar: firebaseUser.photoURL ?? "",
+            role: "user",
+            rating: 1000,
           };
-          setUser(
-            {
-              id: firebaseUser.uid,
-              nickname: data.name || firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Player",
-              email: data.email || firebaseUser.email || "",
-              avatar: data.avatar || firebaseUser.photoURL || undefined,
-              role: data.role || "user",
-              rating: data.rating ?? 0,
-            },
-            firebaseUser.uid
-          );
+          await setDoc(doc(db, "users", firebaseUser.uid), {
+            ...profile,
+            uid: firebaseUser.uid,
+            createdAt: new Date().toISOString(),
+          });
+        }
+
+        setUser(
+          {
+            id: firebaseUser.uid,
+            nickname: profile.name || firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Player",
+            email: profile.email || firebaseUser.email || "",
+            avatar: profile.avatar || firebaseUser.photoURL || undefined,
+            role: profile.role || "user",
+            rating: profile.rating ?? 0,
+          },
+          firebaseUser.uid
+        );
+
+        // Редирект со страниц авторизации на дашборд
+        if (typeof window !== "undefined" && window.location.pathname.startsWith("/auth/")) {
+          window.location.href = "/dashboard";
         }
       } catch {
         // Firestore unavailable — keep cached state

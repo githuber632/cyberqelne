@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2, UserPlus, X, CheckCircle2, User, Mail, Lock, Zap, Ghost } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { registerUser, loginWithGoogle, type RegisterStep } from "@/lib/firebaseRegister";
+import { registerUser, loginWithGoogle, getGoogleRedirectResult, type RegisterStep } from "@/lib/firebaseRegister";
 import { cn } from "@/lib/utils";
 
 const schema = z.object({
@@ -34,7 +34,12 @@ const stepLabels: Record<RegisterStep, string> = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setUser } = useAuthStore();
+  const { setUser, isAuthenticated } = useAuthStore();
+
+  // Если уже авторизован — идём на дашборд (после Google redirect)
+  useEffect(() => {
+    if (isAuthenticated) router.push("/dashboard");
+  }, [isAuthenticated, router]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [step, setStep] = useState<RegisterStep>("idle");
@@ -89,6 +94,14 @@ export default function RegisterPage() {
     }
   };
 
+  // Обработка Google redirect на мобильном (после возврата со страницы Google)
+  useEffect(() => {
+    getGoogleRedirectResult()
+      .then((profile) => { if (profile) { applyUser(profile); router.push("/dashboard"); } })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const isLoading = (step !== "idle" && step !== "error" && !success);
 
   const handleGuest = () => {
@@ -117,7 +130,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden py-12">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden pt-24 pb-8">
       {/* Backgrounds — pointer-events-none so they never block form */}
       <div className="absolute inset-0 cyber-grid-bg opacity-20 pointer-events-none" />
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-cyber-purple/20 rounded-full blur-[120px] pointer-events-none" />

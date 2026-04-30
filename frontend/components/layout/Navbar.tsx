@@ -246,45 +246,80 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — full screen overlay */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-cyber-dark/98 backdrop-blur-xl border-t border-cyber-glass-border"
-          >
-            <div className="px-4 py-4 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyber-neon/10 transition-all duration-200"
-                >
-                  <link.icon className="w-5 h-5 text-cyber-neon" />
-                  <span className="font-medium">{link.label}</span>
-                </Link>
-              ))}
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+              onClick={() => setMobileOpen(false)}
+            />
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "tween", duration: 0.25 }}
+              className="fixed top-0 right-0 bottom-0 w-72 bg-cyber-dark/98 backdrop-blur-xl border-l border-cyber-glass-border z-50 lg:hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-cyber-glass-border">
+                <span className="font-display font-bold text-white">Меню</span>
+                <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Nav links */}
+              <nav className="flex-1 overflow-y-auto py-3 px-3">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-300 hover:text-white hover:bg-cyber-neon/10 transition-all duration-200 mb-1"
+                  >
+                    <link.icon className="w-5 h-5 text-cyber-neon flex-shrink-0" />
+                    <span className="font-medium">{link.label}</span>
+                  </Link>
+                ))}
+                {isAuthenticated && (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-300 hover:text-white hover:bg-cyber-neon/10 transition-all duration-200 mb-1"
+                  >
+                    <LayoutDashboard className="w-5 h-5 text-cyber-neon flex-shrink-0" />
+                    <span className="font-medium">Личный кабинет</span>
+                  </Link>
+                )}
+              </nav>
+
+              {/* Auth buttons */}
               {!isAuthenticated && (
-                <div className="pt-4 border-t border-cyber-glass-border flex gap-3">
+                <div className="p-4 border-t border-cyber-glass-border flex flex-col gap-3">
                   <Link
                     href="/auth/login"
-                    className="flex-1 text-center py-3 rounded-xl border border-cyber-glass-border text-gray-300 hover:text-white transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                    className="w-full text-center py-3.5 rounded-xl border border-cyber-glass-border text-gray-300 hover:text-white hover:bg-white/5 font-semibold transition-colors"
                   >
                     Войти
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="flex-1 text-center py-3 rounded-xl bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-semibold"
+                    onClick={() => setMobileOpen(false)}
+                    className="w-full text-center py-3.5 rounded-xl bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-semibold hover:shadow-neon transition-all"
                   >
                     Регистрация
                   </Link>
                 </div>
               )}
-            </div>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.header>
