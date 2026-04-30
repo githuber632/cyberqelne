@@ -1,8 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
@@ -125,16 +124,15 @@ export async function loginUser(email: string, password: string): Promise<UserPr
   return newProfile;
 }
 
-// ── Вход через Google (всегда redirect — popup блокируется на мобиле) ─────────
-export async function loginWithGoogle(): Promise<UserProfile | null> {
-  await signInWithRedirect(auth, googleProvider);
-  return null; // страница перезагрузится, результат в getGoogleRedirectResult
+// ── Вход через Google (popup — работает на мобиле и десктопе) ────────────────
+export async function loginWithGoogle(): Promise<UserProfile> {
+  const credential = await signInWithPopup(auth, googleProvider);
+  return buildGoogleProfile(credential.user);
 }
 
+// Оставляем для обратной совместимости — больше не используется
 export async function getGoogleRedirectResult(): Promise<UserProfile | null> {
-  const result = await getRedirectResult(auth);
-  if (!result) return null;
-  return buildGoogleProfile(result.user);
+  return null;
 }
 
 async function buildGoogleProfile(user: FirebaseUser): Promise<UserProfile> {
