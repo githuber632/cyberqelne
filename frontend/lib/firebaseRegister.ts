@@ -1,7 +1,6 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider,
@@ -126,19 +125,10 @@ export async function loginUser(email: string, password: string): Promise<UserPr
   return newProfile;
 }
 
-function isMobile() {
-  if (typeof window === "undefined") return false;
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-}
-
-// ── Вход через Google ─────────────────────────────────────────────────────────
+// ── Вход через Google (всегда redirect — popup блокируется на мобиле) ─────────
 export async function loginWithGoogle(): Promise<UserProfile | null> {
-  if (isMobile()) {
-    await signInWithRedirect(auth, googleProvider);
-    return null; // redirect — страница перезагрузится
-  }
-  const credential = await signInWithPopup(auth, googleProvider);
-  return buildGoogleProfile(credential.user);
+  await signInWithRedirect(auth, googleProvider);
+  return null; // страница перезагрузится, результат в getGoogleRedirectResult
 }
 
 export async function getGoogleRedirectResult(): Promise<UserProfile | null> {

@@ -114,7 +114,7 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center relative overflow-y-auto">
         <div className="absolute inset-0 cyber-grid-bg opacity-20" />
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyber-purple/20 rounded-full blur-[120px] pointer-events-none" />
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 200 }} className="relative z-10 glass-card rounded-2xl p-12 text-center max-w-sm mx-4">
@@ -130,7 +130,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden pt-24 pb-8">
+    <div className="min-h-screen flex items-center justify-center relative overflow-y-auto pt-24 pb-8">
       {/* Backgrounds — pointer-events-none so they never block form */}
       <div className="absolute inset-0 cyber-grid-bg opacity-20 pointer-events-none" />
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-cyber-purple/20 rounded-full blur-[120px] pointer-events-none" />

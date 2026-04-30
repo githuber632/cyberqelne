@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuthStore } from "@/store/authStore";
@@ -74,6 +74,10 @@ function AuthSync() {
   const { setUser, logout } = useAuthStore();
 
   useEffect(() => {
+    // Обрабатываем результат Google redirect ДО подписки на authStateChanged
+    // Это гарантирует что Firebase обработает токен перед первым onAuthStateChanged
+    getRedirectResult(auth).catch(() => {});
+
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         if (useAuthStore.getState().user?.id === "guest-demo") return;
