@@ -115,6 +115,7 @@
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     border-radius: inherit;
+    pointer-events: none;
   }
 
   /* Scan line effect */
