@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Публичный контент — читают все, пишут только авторизованные ──
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /tournaments/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /news/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /products/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /videos/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /games/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /teams/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Пользователи ──
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Уведомления (broadcasts) ──
+    match /broadcasts/{doc} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Поддержка ──
+    match /support_tickets/{doc} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Заявки на турниры ──
+    match /tournament_applications/{doc} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}

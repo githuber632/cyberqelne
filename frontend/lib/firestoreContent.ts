@@ -58,9 +58,11 @@ export function subscribeConfig(
   key: string,
   cb: (data: Record<string, unknown> | null) => void
 ): Unsubscribe {
-  return onSnapshot(doc(db, "config", key), (snap) => {
-    cb(snap.exists() ? (snap.data() as Record<string, unknown>) : null);
-  });
+  return onSnapshot(
+    doc(db, "config", key),
+    (snap) => { cb(snap.exists() ? (snap.data() as Record<string, unknown>) : null); },
+    (err) => { console.error(`[Firestore] config/${key} read failed: ${err.code} — проверь правила Firestore`); }
+  );
 }
 
 /** Subscribe to an entire collection, emitting the full array on every change */
@@ -68,7 +70,9 @@ export function subscribeCollection<T extends { id: string }>(
   collName: string,
   cb: (items: T[]) => void
 ): Unsubscribe {
-  return onSnapshot(collection(db, collName), (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as T)));
-  });
+  return onSnapshot(
+    collection(db, collName),
+    (snap) => { cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as T))); },
+    (err) => { console.error(`[Firestore] collection/${collName} read failed: ${err.code} — проверь правила Firestore`); }
+  );
 }
