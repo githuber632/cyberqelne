@@ -45,15 +45,19 @@ export default function LoginPage() {
     router.push("/dashboard");
   };
 
-  // Обрабатываем результат Google redirect (мобильные)
+  // Если вернулись с Google redirect — показываем загрузку сразу
   useEffect(() => {
-    const timeout = setTimeout(() => setGoogleLoading(false), 5000);
+    if (sessionStorage.getItem("googleAuthPending")) {
+      setGoogleLoading(true);
+      sessionStorage.removeItem("googleAuthPending");
+    }
     getGoogleRedirectResult()
-      .then((profile) => {
-        if (profile) applyUser(profile);
+      .then((profile) => { if (profile) applyUser(profile); })
+      .catch((err) => {
+        const code = (err as { code?: string }).code ?? "";
+        if (code) setErrorMsg(`Google ошибка: ${code}`);
       })
-      .catch(() => {})
-      .finally(() => { clearTimeout(timeout); setGoogleLoading(false); });
+      .finally(() => setGoogleLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -90,12 +94,13 @@ export default function LoginPage() {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     setErrorMsg("");
+    sessionStorage.setItem("googleAuthPending", "1");
     try {
       const profile = await loginWithGoogle();
-      // desktop — popup вернёт профиль сразу
-      // mobile — redirect, profile будет null, страница перезагрузится
       if (profile) applyUser(profile);
+      // если null — редирект на Google, страница перезагрузится
     } catch (err: unknown) {
+      sessionStorage.removeItem("googleAuthPending");
       const code = (err as { code?: string }).code ?? "";
       if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
         setErrorMsg(`Google ошибка: ${code}`);
