@@ -1,10 +1,16 @@
 {
   "hosting": {
-    "public": "out",
+    "public": "frontend/out",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "/tournaments/**", "destination": "/tournaments/_/index.html" },
+      { "source": "/news/**",        "destination": "/news/_/index.html" },
+      { "source": "/shop/**",        "destination": "/shop/_/index.html" },
+      { "source": "/players/**",     "destination": "/players/_/index.html" }
     ]
   },
   "firestore": {

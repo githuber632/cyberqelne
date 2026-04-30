@@ -1,5 +1,10 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ShopItemPage() {
-  redirect("/shop");
+  const router = useRouter();
+  useEffect(() => { router.replace("/shop"); }, [router]);
+  return null;
 }
