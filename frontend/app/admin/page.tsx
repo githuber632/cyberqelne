@@ -74,7 +74,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       {/* Quick actions */}
       <div>
         <h2 className="font-display font-bold text-lg text-white mb-4">Быстрые действия</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {quickLinks.map((link, i) => (
             <motion.div
               key={link.href}
