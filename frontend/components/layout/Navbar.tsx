@@ -107,9 +107,8 @@ export function Navbar() {
           <span className="text-xs text-gray-400 font-sans">
             🎮 Открыта регистрация на квалификации Q2 2026
           </span>
-        </motion.div>
+        </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
