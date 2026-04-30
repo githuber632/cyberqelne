@@ -228,7 +228,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-cyber-purple-bright to-cyber-neon rounded-lg hover:shadow-neon transition-all duration-300"
+                  className="hidden sm:block px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-cyber-purple-bright to-cyber-neon rounded-lg hover:shadow-neon transition-all duration-300"
                 >
                   Регистрация
                 </Link>

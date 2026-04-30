@@ -2,12 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
-import { Users, Trophy, DollarSign, Gamepad2, Globe, Zap, Star, Shield } from "lucide-react";
-import { useContentStore } from "@/store/contentStore";
-
-const iconMap = {
-  Users, Trophy, DollarSign, Gamepad2, Globe, Zap, Star, Shield,
-};
+import { Users, Trophy, DollarSign, Gamepad2 } from "lucide-react";
+import { useAutoStats } from "@/hooks/useAutoStats";
 
 function AnimatedCounter({ value, suffix, prefix = "" }: { value: number; suffix: string; prefix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -30,10 +26,43 @@ function AnimatedCounter({ value, suffix, prefix = "" }: { value: number; suffix
   return <span ref={ref}>{prefix}0{suffix}</span>;
 }
 
-export function StatsSection() {
-  const { homeStats } = useContentStore();
+const STAT_DEFS = [
+  {
+    key: "players" as const,
+    label: "Игроков",
+    description: "Зарегистрировано",
+    suffix: "+",
+    icon: Users,
+    color: "text-cyber-neon",
+  },
+  {
+    key: "tournamentsFinished" as const,
+    label: "Турниров",
+    description: "Проведено",
+    suffix: "",
+    icon: Trophy,
+    color: "text-yellow-400",
+  },
+  {
+    key: "registrationsApproved" as const,
+    label: "Участников",
+    description: "Принято в турниры",
+    suffix: "+",
+    icon: Gamepad2,
+    color: "text-green-400",
+  },
+  {
+    key: "prizeTotal" as const,
+    label: "Призовые",
+    description: "Сумма призовых фондов",
+    suffix: " UZS",
+    icon: DollarSign,
+    color: "text-cyber-neon-pink",
+  },
+];
 
-  if (homeStats.length === 0) return null;
+export function StatsSection() {
+  const autoStats = useAutoStats();
 
   return (
     <section className="py-16 relative overflow-hidden">
@@ -42,12 +71,13 @@ export function StatsSection() {
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-cyber-neon/40 to-transparent" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          {homeStats.map((stat, index) => {
-            const Icon = iconMap[stat.icon];
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {STAT_DEFS.map((stat, index) => {
+            const value = autoStats[stat.key];
+            const Icon = stat.icon;
             return (
               <motion.div
-                key={stat.id}
+                key={stat.key}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.08 }}
@@ -61,7 +91,7 @@ export function StatsSection() {
                   </div>
                 </div>
                 <div className={`font-display font-black text-2xl lg:text-3xl mb-1 ${stat.color}`}>
-                  <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix} />
+                  <AnimatedCounter value={value} suffix={stat.suffix} />
                 </div>
                 <div className="text-white font-semibold text-sm mb-0.5">{stat.label}</div>
                 <div className="text-gray-600 text-xs font-mono">{stat.description}</div>

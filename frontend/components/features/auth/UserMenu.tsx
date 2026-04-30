@@ -72,7 +72,7 @@ export function UserMenu({ user }: UserMenuProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-56 glass-card rounded-xl overflow-hidden py-2 z-50"
+            className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] glass-card rounded-xl overflow-hidden py-2 z-50"
           >
             {/* User info */}
             <div className="px-4 py-3 border-b border-cyber-glass-border">

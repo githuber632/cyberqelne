@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, X, Megaphone, CheckCheck } from "lucide-react";
-import { db, auth } from "@/lib/firebase";
+import { Bell, X, Megaphone, CheckCheck, Trash2, HeadphonesIcon, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { db } from "@/lib/firebase";
 import {
   collection, onSnapshot, query, where, orderBy,
-  updateDoc, doc, arrayUnion, limit,
+  updateDoc, deleteDoc, doc, arrayUnion, limit,
 } from "firebase/firestore";
+import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -19,15 +21,19 @@ interface Notification {
   to: string;
   createdAt: { seconds: number } | null;
   readBy: string[];
+  type?: string;
+  link?: string;
 }
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const ref = useRef<HTMLDivElement>(null);
-  const uid = auth.currentUser?.uid;
+  const { user } = useAuthStore();
+  const uid = user?.id;
 
   useEffect(() => {
+    if (!uid) return;
     const q = query(
       collection(db, "broadcasts"),
       orderBy("createdAt", "desc"),
@@ -35,7 +41,6 @@ export function NotificationBell() {
     );
     const unsub = onSnapshot(q, (snap) => {
       const all = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notification));
-      // Show "all" + messages addressed to this user
       setNotifications(all.filter((n) => n.to === "all" || n.to === uid));
     });
     return unsub;
@@ -58,6 +63,13 @@ export function NotificationBell() {
         await updateDoc(doc(db, "broadcasts", n.id), { readBy: arrayUnion(uid) });
       } catch {}
     }
+  }
+
+  async function deleteNotification(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    try {
+      await deleteDoc(doc(db, "broadcasts", id));
+    } catch {}
   }
 
   function handleOpen() {
@@ -90,7 +102,7 @@ export function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-80 glass-card rounded-xl overflow-hidden z-50 shadow-neon"
+            className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] glass-card rounded-xl overflow-hidden z-50 shadow-neon"
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-cyber-glass-border">
               <div className="flex items-center gap-2">
@@ -118,22 +130,46 @@ export function NotificationBell() {
                   const isUnread = uid && !n.readBy?.includes(uid);
                   return (
                     <div key={n.id}
-                      className={cn("px-4 py-3 border-b border-cyber-glass-border/50 transition-colors",
+                      className={cn("px-4 py-3 border-b border-cyber-glass-border/50 transition-colors group",
                         isUnread ? "bg-cyber-neon/5" : "hover:bg-white/5")}>
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyber-purple-bright to-cyber-neon flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Megaphone className="w-4 h-4 text-white" />
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5",
+                          n.type === "support_reply"
+                            ? "bg-gradient-to-br from-green-600 to-teal-600"
+                            : "bg-gradient-to-br from-cyber-purple-bright to-cyber-neon"
+                        )}>
+                          {n.type === "support_reply"
+                            ? <HeadphonesIcon className="w-4 h-4 text-white" />
+                            : <Megaphone className="w-4 h-4 text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 mb-0.5">
                             <span className="font-display font-bold text-white text-xs truncate">{n.title}</span>
-                            {isUnread && <span className="w-2 h-2 bg-cyber-neon-pink rounded-full flex-shrink-0" />}
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {isUnread && <span className="w-2 h-2 bg-cyber-neon-pink rounded-full" />}
+                              <button
+                                onClick={(e) => deleteNotification(n.id, e)}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-600 hover:text-red-400 transition-all"
+                                title="Удалить"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                           <p className="text-gray-400 text-xs leading-relaxed line-clamp-2">{n.message}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-gray-600 text-xs font-mono">{n.fromName}</span>
-                            <span className="text-gray-700 text-xs">·</span>
-                            <span className="text-gray-600 text-xs font-mono">{formatTime(n.createdAt)}</span>
+                          <div className="flex items-center justify-between mt-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 text-xs font-mono">{n.fromName}</span>
+                              <span className="text-gray-700 text-xs">·</span>
+                              <span className="text-gray-600 text-xs font-mono">{formatTime(n.createdAt)}</span>
+                            </div>
+                            {n.type === "support_reply" && n.link && (
+                              <Link href={n.link} onClick={() => setOpen(false)}
+                                className="flex items-center gap-1 text-xs font-mono text-cyber-neon hover:text-white transition-colors flex-shrink-0">
+                                <ExternalLink className="w-3 h-3" />Посмотреть
+                              </Link>
+                            )}
                           </div>
                         </div>
                       </div>

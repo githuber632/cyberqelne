@@ -111,7 +111,7 @@ export default function LoginPage() {
         transition={{ duration: 0.35 }}
         className="relative z-10 w-full max-w-md mx-4"
       >
-        <div className="glass-card rounded-2xl p-8 gradient-border">
+        <div className="glass-card rounded-2xl p-5 sm:p-8 gradient-border">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-cyber-purple-bright to-cyber-neon rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-neon">
               <span className="font-display font-black text-white text-xl">CQ</span>

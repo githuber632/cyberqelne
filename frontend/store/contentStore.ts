@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import {
+  saveConfig, saveItem, deleteItem,
+} from "@/lib/firestoreContent";
 
 // ─── ТИПЫ ───────────────────────────────────────────────
 
@@ -10,7 +13,7 @@ export interface NewsArticle {
   content: string;
   category: string;
   author: string;
-  publishedAt: string; // ISO string
+  publishedAt: string;
   readTime: number;
   featured: boolean;
   published: boolean;
@@ -88,13 +91,11 @@ export interface HeroSettings {
   backgroundVideo: string;
   backgroundOverlay: number;
   showLiveBadge: boolean;
-  // Hero logo / title mode
   heroMode: "text" | "logo";
   heroLogoUrl: string;
   heroLogoHeight: number;
   heroLogoOffsetX: number;
   heroLogoOffsetY: number;
-  // Text colors
   headlineColor: string;
   headlineColor2: string;
   subheadlineColor: string;
@@ -149,6 +150,7 @@ export interface StatItem {
   icon: "Users" | "Trophy" | "DollarSign" | "Gamepad2" | "Globe" | "Zap" | "Star" | "Shield";
   color: string;
   description: string;
+  source?: "players" | "tournaments_finished" | "registrations_approved" | "prize_total";
 }
 
 export interface ShopPromo {
@@ -214,93 +216,31 @@ export interface SiteUser {
   lastSeen: string;
 }
 
+export interface FooterLink { id: string; label: string; href: string; }
+export interface FooterSection { id: string; title: string; links: FooterLink[]; }
+export interface FooterSocial { id: string; label: string; href: string; iconId: string; }
+export interface FooterSettings {
+  description: string;
+  copyright: string;
+  sections: FooterSection[];
+  socials: FooterSocial[];
+}
+
 // ─── НАЧАЛЬНЫЕ ДАННЫЕ ────────────────────────────────────
 
-const initialNews: NewsArticle[] = [];
-
-const initialTournaments: Tournament[] = [];
-
-const initialProducts: Product[] = [];
-
-const initialVideos: Video[] = [];
-
 const initialGames: Game[] = [
-  {
-    id: "g1",
-    name: "Mobile Legends: Bang Bang",
-    shortName: "MLBB",
-    icon: "🎮",
-    image: "",
-    active: true,
-    featured: true,
-    description: "Главная игра платформы CyberQELN в регионе СНГ.",
-    color: "#a855f7",
-  },
-  {
-    id: "g2",
-    name: "PUBG Mobile",
-    shortName: "PUBG",
-    icon: "🔫",
-    image: "",
-    active: true,
-    featured: true,
-    description: "Battle Royale на мобильных устройствах.",
-    color: "#f59e0b",
-  },
-  {
-    id: "g3",
-    name: "Honor of Kings",
-    shortName: "HOK",
-    icon: "⚔️",
-    image: "",
-    active: true,
-    featured: true,
-    description: "Популярная MOBA от Tencent.",
-    color: "#22d3ee",
-  },
+  { id: "g1", name: "Mobile Legends: Bang Bang", shortName: "MLBB", icon: "🎮", image: "", active: true, featured: true, description: "Главная игра платформы CyberQELN в регионе СНГ.", color: "#a855f7" },
+  { id: "g2", name: "PUBG Mobile", shortName: "PUBG", icon: "🔫", image: "", active: true, featured: true, description: "Battle Royale на мобильных устройствах.", color: "#f59e0b" },
+  { id: "g3", name: "Honor of Kings", shortName: "HOK", icon: "⚔️", image: "", active: true, featured: true, description: "Популярная MOBA от Tencent.", color: "#a855f7" },
 ];
 
-const initialStats: StatItem[] = [];
-
-const initialShopPromo: ShopPromo = {
-  enabled: false,
-  title: "",
-  description: "",
-  promoCode: "",
-  buttonText: "Открыть магазин",
-  buttonHref: "/shop",
-};
-
-const initialTeams: Team[] = [];
-
-const initialUsers: SiteUser[] = [];
-
 const initialLiveBanners: LiveBanner[] = [
-  {
-    id: "lb1",
-    title: "CyberQELN Championship S2 — Финал",
-    description: "Смотри финальный матч в прямом эфире на нашем YouTube канале",
-    thumbnailUrl: "",
-    youtubeUrl: "https://youtube.com/live/example",
-    isLive: true,
-    active: true,
-    publishedAt: "2026-04-22T18:00:00",
-  },
-  {
-    id: "lb2",
-    title: "Обзор патча 1.8.94 — Mobile Legends",
-    description: "Полный разбор изменений новой меты с профессиональным аналитиком",
-    thumbnailUrl: "",
-    youtubeUrl: "https://youtube.com/watch?v=example2",
-    isLive: false,
-    active: true,
-    publishedAt: "2026-04-20T14:00:00",
-  },
+  { id: "lb1", title: "CyberQELN Championship S2 — Финал", description: "Смотри финальный матч в прямом эфире на нашем YouTube канале", thumbnailUrl: "", youtubeUrl: "https://youtube.com/live/example", isLive: true, active: true, publishedAt: "2026-04-22T18:00:00" },
+  { id: "lb2", title: "Обзор патча 1.8.94 — Mobile Legends", description: "Полный разбор изменений новой меты с профессиональным аналитиком", thumbnailUrl: "", youtubeUrl: "https://youtube.com/watch?v=example2", isLive: false, active: true, publishedAt: "2026-04-20T14:00:00" },
 ];
 
 const initialCommunitySettings: CommunitySettings = {
-  title: "Сообщество",
-  subtitle: "Присоединяйся к растущему сообществу CyberQELN",
+  title: "Сообщество", subtitle: "Присоединяйся к растущему сообществу CyberQELN",
   stats: [
     { id: "s1", label: "Игроков", value: "12,400+", iconName: "Users", color: "text-cyber-neon" },
     { id: "s2", label: "Турниров", value: "340+", iconName: "Trophy", color: "text-yellow-400" },
@@ -321,80 +261,25 @@ const initialCommunitySettings: CommunitySettings = {
     { id: "f3", q: "Как получить приз?", a: "После завершения турнира призы выплачиваются на банковскую карту в течение 7 рабочих дней. Нужен верифицированный аккаунт." },
     { id: "f4", q: "Можно ли участвовать из другой страны?", a: "Да! Платформа открыта для всего СНГ. Турниры доступны игрокам из Узбекистана, Казахстана, России, Кыргызстана и других стран." },
   ],
-  ctaTitle: "Готов присоединиться?",
-  ctaSubtitle: "Создай аккаунт и начни участвовать в турнирах уже сегодня",
-  ctaPrimaryText: "Регистрация",
-  ctaPrimaryHref: "/auth/register",
-  ctaSecondaryText: "Смотреть турниры",
-  ctaSecondaryHref: "/tournaments",
+  ctaTitle: "Готов присоединиться?", ctaSubtitle: "Создай аккаунт и начни участвовать в турнирах уже сегодня",
+  ctaPrimaryText: "Регистрация", ctaPrimaryHref: "/auth/register",
+  ctaSecondaryText: "Смотреть турниры", ctaSecondaryHref: "/tournaments",
 };
-
-// ─── FOOTER ─────────────────────────────────────────────
-
-export interface FooterLink {
-  id: string;
-  label: string;
-  href: string;
-}
-
-export interface FooterSection {
-  id: string;
-  title: string;
-  links: FooterLink[];
-}
-
-export interface FooterSocial {
-  id: string;
-  label: string;
-  href: string;
-  iconId: string; // key from SOCIAL_PLATFORMS (e.g. "youtube", "telegram")
-}
-
-export interface FooterSettings {
-  description: string;
-  copyright: string;
-  sections: FooterSection[];
-  socials: FooterSocial[];
-}
 
 const initialFooterSettings: FooterSettings = {
   description: "Главная киберспортивная экосистема СНГ. Объединяем игроков, команды и болельщиков.",
   copyright: "© 2026 CyberQELN. Все права защищены.",
   sections: [
-    {
-      id: "fs1", title: "Платформа", links: [
-        { id: "fl1", label: "О нас", href: "/about" },
-        { id: "fl2", label: "Турниры", href: "/tournaments" },
-        { id: "fl3", label: "Команды", href: "/teams" },
-        { id: "fl4", label: "Медиа", href: "/media" },
-      ],
-    },
-    {
-      id: "fs2", title: "Сообщество", links: [
-        { id: "fl5", label: "Discord", href: "https://discord.gg/cyberqeln" },
-        { id: "fl6", label: "Телеграм", href: "https://t.me/cyberqeln" },
-        { id: "fl7", label: "Новости", href: "/news" },
-      ],
-    },
-    {
-      id: "fs3", title: "Магазин", links: [
-        { id: "fl8", label: "Мерч", href: "/shop" },
-        { id: "fl9", label: "Доставка", href: "/shop/delivery" },
-      ],
-    },
-    {
-      id: "fs4", title: "Поддержка", links: [
-        { id: "fl10", label: "FAQ", href: "/faq" },
-        { id: "fl11", label: "Правила", href: "/rules" },
-        { id: "fl12", label: "Контакты", href: "/contact" },
-      ],
-    },
+    { id: "fs1", title: "Платформа", links: [{ id: "fl1", label: "О нас", href: "/about" }, { id: "fl2", label: "Турниры", href: "/tournaments" }, { id: "fl3", label: "Команды", href: "/teams" }, { id: "fl4", label: "Медиа", href: "/media" }] },
+    { id: "fs2", title: "Сообщество", links: [{ id: "fl5", label: "Discord", href: "https://discord.gg/cyberqeln" }, { id: "fl6", label: "Телеграм", href: "https://t.me/cyberqeln" }, { id: "fl7", label: "Новости", href: "/news" }] },
+    { id: "fs3", title: "Магазин", links: [{ id: "fl8", label: "Мерч", href: "/shop" }, { id: "fl9", label: "Доставка", href: "/shop/delivery" }] },
+    { id: "fs4", title: "Поддержка", links: [{ id: "fl10", label: "FAQ", href: "/faq" }, { id: "fl11", label: "Правила", href: "/rules" }, { id: "fl12", label: "Контакты", href: "/contact" }] },
   ],
   socials: [
-    { id: "fsoc1", label: "YouTube",   href: "https://youtube.com/@cyberqeln",  iconId: "youtube"   },
-    { id: "fsoc2", label: "Telegram",  href: "https://t.me/cyberqeln",          iconId: "telegram"  },
+    { id: "fsoc1", label: "YouTube", href: "https://youtube.com/@cyberqeln", iconId: "youtube" },
+    { id: "fsoc2", label: "Telegram", href: "https://t.me/cyberqeln", iconId: "telegram" },
     { id: "fsoc3", label: "Instagram", href: "https://instagram.com/cyberqeln", iconId: "instagram" },
-    { id: "fsoc4", label: "Twitter",   href: "https://twitter.com/cyberqeln",   iconId: "twitter"   },
+    { id: "fsoc4", label: "Twitter", href: "https://twitter.com/cyberqeln", iconId: "twitter" },
   ],
 };
 
@@ -415,6 +300,9 @@ interface ContentState {
   communitySettings: CommunitySettings;
   footerSettings: FooterSettings;
   liveBanners: LiveBanner[];
+
+  // Used by FirestoreSync to push remote data without triggering re-write to Firestore
+  _syncFromFirestore: (patch: Partial<Omit<ContentState, keyof ContentActions | "_syncFromFirestore">>) => void;
 
   // News
   addNews: (item: Omit<NewsArticle, "id">) => void;
@@ -446,7 +334,7 @@ interface ContentState {
   updateTeam: (id: string, data: Partial<Team>) => void;
   deleteTeam: (id: string) => void;
 
-  // Users
+  // Users (local only — real users are in Firestore users collection)
   updateUser: (id: string, data: Partial<SiteUser>) => void;
   deleteUser: (id: string) => void;
   addUser: (item: Omit<SiteUser, "id">) => void;
@@ -485,20 +373,33 @@ interface ContentState {
   updateCommunityStat: (id: string, data: Partial<CommunityStat>) => void;
 }
 
+type ContentActions = Omit<ContentState,
+  "news" | "tournaments" | "products" | "videos" | "games" | "teams" | "users" |
+  "homeStats" | "shopPromo" | "heroSettings" | "siteSettings" | "communitySettings" |
+  "footerSettings" | "liveBanners"
+>;
+
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+// Debounce helpers for settings (sliders fire rapidly)
+const debounceMap = new Map<string, ReturnType<typeof setTimeout>>();
+function debouncedSaveConfig(key: string, data: object, ms = 600) {
+  if (debounceMap.has(key)) clearTimeout(debounceMap.get(key)!);
+  debounceMap.set(key, setTimeout(() => { saveConfig(key, data); debounceMap.delete(key); }, ms));
+}
 
 export const useContentStore = create<ContentState>()(
   persist(
-    (set) => ({
-      news: initialNews,
-      tournaments: initialTournaments,
-      products: initialProducts,
-      videos: initialVideos,
+    (set, get) => ({
+      news: [],
+      tournaments: [],
+      products: [],
+      videos: [],
       games: initialGames,
-      teams: initialTeams,
-      users: initialUsers,
-      homeStats: initialStats,
-      shopPromo: initialShopPromo,
+      teams: [],
+      users: [],
+      homeStats: [],
+      shopPromo: { enabled: false, title: "", description: "", promoCode: "", buttonText: "Открыть магазин", buttonHref: "/shop" },
 
       heroSettings: {
         featuredTournamentId: "t1",
@@ -529,7 +430,7 @@ export const useContentStore = create<ContentState>()(
         logoOffsetX: 0,
         logoOffsetY: 0,
         primaryColor: "#a855f7",
-        accentColor: "#22d3ee",
+        accentColor: "#e879f9",
         maintenanceMode: false,
         registrationEnabled: true,
         announcementBanner: "🏆 CyberQELN Championship S2 — Финал уже скоро!",
@@ -540,142 +441,281 @@ export const useContentStore = create<ContentState>()(
       footerSettings: initialFooterSettings,
       liveBanners: initialLiveBanners,
 
-      // LiveBanner actions
-      addLiveBanner: (item) => set((s) => ({ liveBanners: [{ ...item, id: uid() }, ...s.liveBanners] })),
-      updateLiveBanner: (id, data) => set((s) => ({ liveBanners: s.liveBanners.map((b) => b.id === id ? { ...b, ...data } : b) })),
-      deleteLiveBanner: (id) => set((s) => ({ liveBanners: s.liveBanners.filter((b) => b.id !== id) })),
+      // Internal: push Firestore data to store without triggering re-write
+      _syncFromFirestore: (patch) => set(patch as Partial<ContentState>),
 
-      // News actions
-      addNews: (item) => set((s) => ({ news: [{ ...item, id: uid() }, ...s.news] })),
-      updateNews: (id, data) => set((s) => ({ news: s.news.map((n) => n.id === id ? { ...n, ...data } : n) })),
-      deleteNews: (id) => set((s) => ({ news: s.news.filter((n) => n.id !== id) })),
+      // ── LiveBanners ──────────────────────────────
+      addLiveBanner: (item) => set((s) => {
+        const n = { ...item, id: uid() };
+        const next = [n, ...s.liveBanners];
+        saveConfig("liveBanners", { items: next });
+        return { liveBanners: next };
+      }),
+      updateLiveBanner: (id, data) => set((s) => {
+        const next = s.liveBanners.map((b) => b.id === id ? { ...b, ...data } : b);
+        saveConfig("liveBanners", { items: next });
+        return { liveBanners: next };
+      }),
+      deleteLiveBanner: (id) => set((s) => {
+        const next = s.liveBanners.filter((b) => b.id !== id);
+        saveConfig("liveBanners", { items: next });
+        return { liveBanners: next };
+      }),
 
-      // Tournaments actions
-      addTournament: (item) => set((s) => ({ tournaments: [{ ...item, id: uid() }, ...s.tournaments] })),
-      updateTournament: (id, data) => set((s) => ({ tournaments: s.tournaments.map((t) => t.id === id ? { ...t, ...data } : t) })),
-      deleteTournament: (id) => set((s) => ({ tournaments: s.tournaments.filter((t) => t.id !== id) })),
+      // ── News ─────────────────────────────────────
+      addNews: (item) => set((s) => {
+        const n = { ...item, id: uid() };
+        saveItem("news", n.id, n);
+        return { news: [n, ...s.news] };
+      }),
+      updateNews: (id, data) => set((s) => {
+        const next = s.news.map((n) => n.id === id ? { ...n, ...data } : n);
+        const updated = next.find((n) => n.id === id);
+        if (updated) saveItem("news", id, updated);
+        return { news: next };
+      }),
+      deleteNews: (id) => set((s) => {
+        deleteItem("news", id);
+        return { news: s.news.filter((n) => n.id !== id) };
+      }),
 
-      // Products actions
-      addProduct: (item) => set((s) => ({ products: [{ ...item, id: uid() }, ...s.products] })),
-      updateProduct: (id, data) => set((s) => ({ products: s.products.map((p) => p.id === id ? { ...p, ...data } : p) })),
-      deleteProduct: (id) => set((s) => ({ products: s.products.filter((p) => p.id !== id) })),
+      // ── Tournaments ──────────────────────────────
+      addTournament: (item) => set((s) => {
+        const n = { ...item, id: uid() };
+        saveItem("tournaments", n.id, n);
+        return { tournaments: [n, ...s.tournaments] };
+      }),
+      updateTournament: (id, data) => set((s) => {
+        const next = s.tournaments.map((t) => t.id === id ? { ...t, ...data } : t);
+        const updated = next.find((t) => t.id === id);
+        if (updated) saveItem("tournaments", id, updated);
+        return { tournaments: next };
+      }),
+      deleteTournament: (id) => set((s) => {
+        deleteItem("tournaments", id);
+        return { tournaments: s.tournaments.filter((t) => t.id !== id) };
+      }),
 
-      // Videos actions
-      addVideo: (item) => set((s) => ({ videos: [{ ...item, id: uid() }, ...s.videos] })),
-      updateVideo: (id, data) => set((s) => ({ videos: s.videos.map((v) => v.id === id ? { ...v, ...data } : v) })),
-      deleteVideo: (id) => set((s) => ({ videos: s.videos.filter((v) => v.id !== id) })),
+      // ── Products ─────────────────────────────────
+      addProduct: (item) => set((s) => {
+        const n = { ...item, id: uid() };
+        saveItem("products", n.id, n);
+        return { products: [n, ...s.products] };
+      }),
+      updateProduct: (id, data) => set((s) => {
+        const next = s.products.map((p) => p.id === id ? { ...p, ...data } : p);
+        const updated = next.find((p) => p.id === id);
+        if (updated) saveItem("products", id, updated);
+        return { products: next };
+      }),
+      deleteProduct: (id) => set((s) => {
+        deleteItem("products", id);
+        return { products: s.products.filter((p) => p.id !== id) };
+      }),
 
-      // Games actions
-      addGame: (item) => set((s) => ({ games: [{ ...item, id: uid() }, ...s.games] })),
-      updateGame: (id, data) => set((s) => ({ games: s.games.map((g) => g.id === id ? { ...g, ...data } : g) })),
-      deleteGame: (id) => set((s) => ({ games: s.games.filter((g) => g.id !== id) })),
+      // ── Videos ───────────────────────────────────
+      addVideo: (item) => set((s) => {
+        const n = { ...item, id: uid() };
+        saveItem("videos", n.id, n);
+        return { videos: [n, ...s.videos] };
+      }),
+      updateVideo: (id, data) => set((s) => {
+        const next = s.videos.map((v) => v.id === id ? { ...v, ...data } : v);
+        const updated = next.find((v) => v.id === id);
+        if (updated) saveItem("videos", id, updated);
+        return { videos: next };
+      }),
+      deleteVideo: (id) => set((s) => {
+        deleteItem("videos", id);
+        return { videos: s.videos.filter((v) => v.id !== id) };
+      }),
 
-      // Teams actions
-      addTeam: (item) => set((s) => ({ teams: [{ ...item, id: uid() }, ...s.teams] })),
-      updateTeam: (id, data) => set((s) => ({ teams: s.teams.map((t) => t.id === id ? { ...t, ...data } : t) })),
-      deleteTeam: (id) => set((s) => ({ teams: s.teams.filter((t) => t.id !== id) })),
+      // ── Games ────────────────────────────────────
+      addGame: (item) => set((s) => {
+        const n = { ...item, id: uid() };
+        saveItem("games", n.id, n);
+        return { games: [n, ...s.games] };
+      }),
+      updateGame: (id, data) => set((s) => {
+        const next = s.games.map((g) => g.id === id ? { ...g, ...data } : g);
+        const updated = next.find((g) => g.id === id);
+        if (updated) saveItem("games", id, updated);
+        return { games: next };
+      }),
+      deleteGame: (id) => set((s) => {
+        deleteItem("games", id);
+        return { games: s.games.filter((g) => g.id !== id) };
+      }),
 
-      // Users actions
+      // ── Teams ────────────────────────────────────
+      addTeam: (item) => set((s) => {
+        const n = { ...item, id: uid() };
+        saveItem("teams", n.id, n);
+        return { teams: [n, ...s.teams] };
+      }),
+      updateTeam: (id, data) => set((s) => {
+        const next = s.teams.map((t) => t.id === id ? { ...t, ...data } : t);
+        const updated = next.find((t) => t.id === id);
+        if (updated) saveItem("teams", id, updated);
+        return { teams: next };
+      }),
+      deleteTeam: (id) => set((s) => {
+        deleteItem("teams", id);
+        return { teams: s.teams.filter((t) => t.id !== id) };
+      }),
+
+      // ── Users (local) ────────────────────────────
       addUser: (item) => set((s) => ({ users: [{ ...item, id: uid() }, ...s.users] })),
       updateUser: (id, data) => set((s) => ({ users: s.users.map((u) => u.id === id ? { ...u, ...data } : u) })),
       deleteUser: (id) => set((s) => ({ users: s.users.filter((u) => u.id !== id) })),
 
-      // Stats actions
-      addStat: (item) => set((s) => ({ homeStats: [...s.homeStats, { ...item, id: uid() }] })),
-      updateStat: (id, data) => set((s) => ({ homeStats: s.homeStats.map((st) => st.id === id ? { ...st, ...data } : st) })),
-      deleteStat: (id) => set((s) => ({ homeStats: s.homeStats.filter((st) => st.id !== id) })),
+      // ── Stats ────────────────────────────────────
+      addStat: (item) => set((s) => {
+        const next = [...s.homeStats, { ...item, id: uid() }];
+        saveConfig("homeStats", { items: next });
+        return { homeStats: next };
+      }),
+      updateStat: (id, data) => set((s) => {
+        const next = s.homeStats.map((st) => st.id === id ? { ...st, ...data } : st);
+        saveConfig("homeStats", { items: next });
+        return { homeStats: next };
+      }),
+      deleteStat: (id) => set((s) => {
+        const next = s.homeStats.filter((st) => st.id !== id);
+        saveConfig("homeStats", { items: next });
+        return { homeStats: next };
+      }),
 
-      // ShopPromo actions
-      updateShopPromo: (data) => set((s) => ({ shopPromo: { ...s.shopPromo, ...data } })),
+      // ── ShopPromo ────────────────────────────────
+      updateShopPromo: (data) => set((s) => {
+        const next = { ...s.shopPromo, ...data };
+        saveConfig("shopPromo", next);
+        return { shopPromo: next };
+      }),
 
-      // Settings actions
-      updateHeroSettings: (data) => set((s) => ({ heroSettings: { ...s.heroSettings, ...data } })),
-      updateSiteSettings: (data) => set((s) => ({ siteSettings: { ...s.siteSettings, ...data } })),
-      updateCommunitySettings: (data) => set((s) => ({ communitySettings: { ...s.communitySettings, ...data } })),
+      // ── Settings (debounced for sliders) ─────────
+      updateHeroSettings: (data) => set((s) => {
+        const next = { ...s.heroSettings, ...data };
+        debouncedSaveConfig("heroSettings", next);
+        return { heroSettings: next };
+      }),
+      updateSiteSettings: (data) => set((s) => {
+        const next = { ...s.siteSettings, ...data };
+        debouncedSaveConfig("siteSettings", next);
+        return { siteSettings: next };
+      }),
+      updateCommunitySettings: (data) => set((s) => {
+        const next = { ...s.communitySettings, ...data };
+        saveConfig("communitySettings", next);
+        return { communitySettings: next };
+      }),
 
-      // Community actions
+      // ── Community sub-actions ────────────────────
       addSocial: (item) => set((s) => {
-        const cs = s.communitySettings;
-        return { communitySettings: { ...cs, socials: [...cs.socials, { ...item, id: uid() }] } };
+        const cs = { ...s.communitySettings, socials: [...s.communitySettings.socials, { ...item, id: uid() }] };
+        saveConfig("communitySettings", cs);
+        return { communitySettings: cs };
       }),
       updateSocial: (id, data) => set((s) => {
-        const cs = s.communitySettings;
-        return { communitySettings: { ...cs, socials: cs.socials.map((sc) => sc.id === id ? { ...sc, ...data } : sc) } };
+        const cs = { ...s.communitySettings, socials: s.communitySettings.socials.map((sc) => sc.id === id ? { ...sc, ...data } : sc) };
+        saveConfig("communitySettings", cs);
+        return { communitySettings: cs };
       }),
       deleteSocial: (id) => set((s) => {
-        const cs = s.communitySettings;
-        return { communitySettings: { ...cs, socials: cs.socials.filter((sc) => sc.id !== id) } };
+        const cs = { ...s.communitySettings, socials: s.communitySettings.socials.filter((sc) => sc.id !== id) };
+        saveConfig("communitySettings", cs);
+        return { communitySettings: cs };
       }),
       addFaq: (item) => set((s) => {
-        const cs = s.communitySettings;
-        return { communitySettings: { ...cs, faq: [...cs.faq, { ...item, id: uid() }] } };
+        const cs = { ...s.communitySettings, faq: [...s.communitySettings.faq, { ...item, id: uid() }] };
+        saveConfig("communitySettings", cs);
+        return { communitySettings: cs };
       }),
       updateFaq: (id, data) => set((s) => {
-        const cs = s.communitySettings;
-        return { communitySettings: { ...cs, faq: cs.faq.map((f) => f.id === id ? { ...f, ...data } : f) } };
+        const cs = { ...s.communitySettings, faq: s.communitySettings.faq.map((f) => f.id === id ? { ...f, ...data } : f) };
+        saveConfig("communitySettings", cs);
+        return { communitySettings: cs };
       }),
       deleteFaq: (id) => set((s) => {
-        const cs = s.communitySettings;
-        return { communitySettings: { ...cs, faq: cs.faq.filter((f) => f.id !== id) } };
+        const cs = { ...s.communitySettings, faq: s.communitySettings.faq.filter((f) => f.id !== id) };
+        saveConfig("communitySettings", cs);
+        return { communitySettings: cs };
       }),
       updateCommunityStat: (id, data) => set((s) => {
-        const cs = s.communitySettings;
-        return { communitySettings: { ...cs, stats: cs.stats.map((st) => st.id === id ? { ...st, ...data } : st) } };
+        const cs = { ...s.communitySettings, stats: s.communitySettings.stats.map((st) => st.id === id ? { ...st, ...data } : st) };
+        saveConfig("communitySettings", cs);
+        return { communitySettings: cs };
       }),
 
-      // Footer actions
-      updateFooterSettings: (data) => set((s) => ({ footerSettings: { ...s.footerSettings, ...data } })),
-      addFooterSection: (item) => set((s) => ({ footerSettings: { ...s.footerSettings, sections: [...s.footerSettings.sections, { ...item, id: uid() }] } })),
-      updateFooterSection: (id, data) => set((s) => ({ footerSettings: { ...s.footerSettings, sections: s.footerSettings.sections.map((sec) => sec.id === id ? { ...sec, ...data } : sec) } })),
-      deleteFooterSection: (id) => set((s) => ({ footerSettings: { ...s.footerSettings, sections: s.footerSettings.sections.filter((sec) => sec.id !== id) } })),
-      addFooterLink: (sectionId, item) => set((s) => ({
-        footerSettings: {
-          ...s.footerSettings,
-          sections: s.footerSettings.sections.map((sec) =>
-            sec.id === sectionId ? { ...sec, links: [...sec.links, { ...item, id: uid() }] } : sec
-          ),
-        },
-      })),
-      updateFooterLink: (sectionId, linkId, data) => set((s) => ({
-        footerSettings: {
-          ...s.footerSettings,
-          sections: s.footerSettings.sections.map((sec) =>
-            sec.id === sectionId ? { ...sec, links: sec.links.map((l) => l.id === linkId ? { ...l, ...data } : l) } : sec
-          ),
-        },
-      })),
-      deleteFooterLink: (sectionId, linkId) => set((s) => ({
-        footerSettings: {
-          ...s.footerSettings,
-          sections: s.footerSettings.sections.map((sec) =>
-            sec.id === sectionId ? { ...sec, links: sec.links.filter((l) => l.id !== linkId) } : sec
-          ),
-        },
-      })),
-      addFooterSocial: (item) => set((s) => ({ footerSettings: { ...s.footerSettings, socials: [...s.footerSettings.socials, { ...item, id: uid() }] } })),
-      updateFooterSocial: (id, data) => set((s) => ({ footerSettings: { ...s.footerSettings, socials: s.footerSettings.socials.map((soc) => soc.id === id ? { ...soc, ...data } : soc) } })),
-      deleteFooterSocial: (id) => set((s) => ({ footerSettings: { ...s.footerSettings, socials: s.footerSettings.socials.filter((soc) => soc.id !== id) } })),
+      // ── Footer actions ───────────────────────────
+      updateFooterSettings: (data) => set((s) => {
+        const next = { ...s.footerSettings, ...data };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      addFooterSection: (item) => set((s) => {
+        const next = { ...s.footerSettings, sections: [...s.footerSettings.sections, { ...item, id: uid() }] };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      updateFooterSection: (id, data) => set((s) => {
+        const next = { ...s.footerSettings, sections: s.footerSettings.sections.map((sec) => sec.id === id ? { ...sec, ...data } : sec) };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      deleteFooterSection: (id) => set((s) => {
+        const next = { ...s.footerSettings, sections: s.footerSettings.sections.filter((sec) => sec.id !== id) };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      addFooterLink: (sectionId, item) => set((s) => {
+        const next = { ...s.footerSettings, sections: s.footerSettings.sections.map((sec) => sec.id === sectionId ? { ...sec, links: [...sec.links, { ...item, id: uid() }] } : sec) };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      updateFooterLink: (sectionId, linkId, data) => set((s) => {
+        const next = { ...s.footerSettings, sections: s.footerSettings.sections.map((sec) => sec.id === sectionId ? { ...sec, links: sec.links.map((l) => l.id === linkId ? { ...l, ...data } : l) } : sec) };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      deleteFooterLink: (sectionId, linkId) => set((s) => {
+        const next = { ...s.footerSettings, sections: s.footerSettings.sections.map((sec) => sec.id === sectionId ? { ...sec, links: sec.links.filter((l) => l.id !== linkId) } : sec) };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      addFooterSocial: (item) => set((s) => {
+        const next = { ...s.footerSettings, socials: [...s.footerSettings.socials, { ...item, id: uid() }] };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      updateFooterSocial: (id, data) => set((s) => {
+        const next = { ...s.footerSettings, socials: s.footerSettings.socials.map((soc) => soc.id === id ? { ...soc, ...data } : soc) };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
+      deleteFooterSocial: (id) => set((s) => {
+        const next = { ...s.footerSettings, socials: s.footerSettings.socials.filter((soc) => soc.id !== id) };
+        saveConfig("footerSettings", next);
+        return { footerSettings: next };
+      }),
     }),
     {
-      name: "cyberqeln-content-v4",
-      // Don't persist base64 video/image blobs — they exceed localStorage quota
+      name: "cyberqeln-content-v5",
       partialize: (state) => ({
         ...state,
         heroSettings: {
           ...state.heroSettings,
           backgroundVideo: state.heroSettings.backgroundVideo?.startsWith("blob:") || state.heroSettings.backgroundVideo?.startsWith("data:")
-            ? ""
-            : (state.heroSettings.backgroundVideo ?? ""),
+            ? "" : (state.heroSettings.backgroundVideo ?? ""),
           backgroundImage: state.heroSettings.backgroundImage?.startsWith("blob:")
-            ? ""
-            : (state.heroSettings.backgroundImage ?? ""),
+            ? "" : (state.heroSettings.backgroundImage ?? ""),
         },
       }),
     }
   )
 );
 
-// In-memory store for video blob URLs (not persisted — cleared on page refresh)
+// In-memory store for video blob URLs (not persisted)
 interface MediaBlobState {
   heroBlobVideo: string;
   setHeroBlobVideo: (url: string) => void;

@@ -122,14 +122,14 @@ export function HeroSection() {
               ) : (
                 <h1 className="font-display font-black leading-none">
                   <span
-                    className="block text-5xl sm:text-6xl lg:text-7xl"
+                    className="block text-3xl sm:text-5xl lg:text-7xl"
                     style={{ color: heroSettings.headlineColor || "#ffffff" }}
                   >
                     {headline.length > 6 ? headline.slice(0, Math.ceil(headline.length / 2)) : headline}
                   </span>
                   {headline.length > 3 && (
                     <span
-                      className="block text-5xl sm:text-6xl lg:text-7xl"
+                      className="block text-3xl sm:text-5xl lg:text-7xl"
                       style={{ color: heroSettings.headlineColor2 || "#a855f7" }}
                     >
                       {headline.length > 6 ? headline.slice(Math.ceil(headline.length / 2)) : ""}
@@ -138,7 +138,7 @@ export function HeroSection() {
                 </h1>
               )}
               <span
-                className="block text-xl sm:text-2xl lg:text-3xl font-light mt-2 tracking-widest font-display"
+                className="block text-base sm:text-xl lg:text-3xl font-light mt-2 tracking-widest font-display"
                 style={{ color: heroSettings.subheadlineColor || "#9ca3af" }}
               >
                 {subheadline}
@@ -149,7 +149,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-gray-400 text-lg max-w-lg mb-8 leading-relaxed"
+              className="text-gray-400 text-sm sm:text-lg max-w-lg mb-8 leading-relaxed"
             >
               {siteSettings.tagline || "Главная киберспортивная платформа СНГ. Участвуй в турнирах, создавай команды, следи за лучшими игроками региона."}
             </motion.p>
@@ -158,14 +158,14 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-wrap gap-4 mb-10"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10"
             >
-              <Link href="/tournaments" className="group relative flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-display font-semibold rounded-xl hover:shadow-neon transition-all duration-300 hover:scale-105">
+              <Link href="/tournaments" className="group relative flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-display font-semibold rounded-xl hover:shadow-neon transition-all duration-300 hover:scale-105">
                 <Trophy className="w-5 h-5" />
                 {ctaText}
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link href="/media" className="group flex items-center gap-2 px-8 py-4 glass-card rounded-xl text-white font-display font-semibold hover:border-cyber-neon/50 transition-all duration-300">
+              <Link href="/media" className="group flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 glass-card rounded-xl text-white font-display font-semibold hover:border-cyber-neon/50 transition-all duration-300">
                 <Play className="w-5 h-5 text-cyber-neon-pink" />
                 Смотреть Live
               </Link>

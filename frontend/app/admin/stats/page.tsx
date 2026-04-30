@@ -30,6 +30,14 @@ const colorOptions = [
   { value: "text-orange-400", label: "Оранжевый" },
 ];
 
+const sourceOptions = [
+  { value: "", label: "Вручную" },
+  { value: "players", label: "Игроки (авто)" },
+  { value: "tournaments_finished", label: "Турниры завершённые (авто)" },
+  { value: "registrations_approved", label: "Заявки принятые (авто)" },
+  { value: "prize_total", label: "Призовые сумма (авто)" },
+];
+
 const emptyForm: Omit<StatItem, "id"> = {
   label: "",
   value: 0,
@@ -38,6 +46,7 @@ const emptyForm: Omit<StatItem, "id"> = {
   icon: "Users",
   color: "text-cyber-neon",
   description: "",
+  source: undefined,
 };
 
 export default function AdminStatsPage() {
@@ -61,7 +70,7 @@ export default function AdminStatsPage() {
 
   function openEdit(stat: StatItem) {
     setEditing(stat);
-    setForm({ label: stat.label, value: stat.value, suffix: stat.suffix, prefix: stat.prefix ?? "", icon: stat.icon, color: stat.color, description: stat.description });
+    setForm({ label: stat.label, value: stat.value, suffix: stat.suffix, prefix: stat.prefix ?? "", icon: stat.icon, color: stat.color, description: stat.description, source: stat.source });
     setModalOpen(true);
   }
 
@@ -125,14 +134,23 @@ export default function AdminStatsPage() {
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-cyber-purple/30 flex items-center justify-center">
-                  <span className={`text-xl font-bold ${stat.color}`}>
-                    {stat.prefix}{stat.value.toLocaleString()}{stat.suffix}
-                  </span>
+                  {stat.source ? (
+                    <span className="text-xs font-bold text-cyber-neon text-center leading-tight">авто</span>
+                  ) : (
+                    <span className={`text-xl font-bold ${stat.color}`}>
+                      {stat.prefix}{stat.value.toLocaleString()}{stat.suffix}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <div className="font-display font-bold text-white text-sm">{stat.label}</div>
                   <div className="text-gray-500 text-xs font-mono">{stat.description}</div>
-                  <div className="text-gray-600 text-xs mt-0.5">Иконка: {stat.icon}</div>
+                  <div className="text-gray-600 text-xs mt-0.5">
+                    {stat.source
+                      ? <span className="text-cyber-neon/70">⚡ {sourceOptions.find(o => o.value === stat.source)?.label}</span>
+                      : `Иконка: ${stat.icon}`
+                    }
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
@@ -159,10 +177,7 @@ export default function AdminStatsPage() {
               <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Зарегистрировано" />
             </FormField>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <FormField label="Число">
-              <Input type="number" value={form.value} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })} placeholder="12400" />
-            </FormField>
+          <div className="grid grid-cols-2 gap-4">
             <FormField label="Префикс">
               <Input value={form.prefix ?? ""} onChange={(e) => setForm({ ...form, prefix: e.target.value })} placeholder="" />
             </FormField>
@@ -178,6 +193,23 @@ export default function AdminStatsPage() {
               <Select value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} options={colorOptions} />
             </FormField>
           </div>
+          <FormField label="Источник данных">
+            <Select
+              value={form.source ?? ""}
+              onChange={(e) => setForm({ ...form, source: (e.target.value as StatItem["source"]) || undefined })}
+              options={sourceOptions}
+            />
+          </FormField>
+          {!form.source && (
+            <FormField label="Число">
+              <Input type="number" value={form.value} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })} placeholder="12400" />
+            </FormField>
+          )}
+          {form.source && (
+            <p className="text-xs font-mono text-cyber-neon bg-cyber-neon/10 border border-cyber-neon/30 rounded-xl px-4 py-2.5">
+              Значение подтягивается автоматически из базы данных — поле «Число» не нужно.
+            </p>
+          )}
           <button
             type="button"
             onClick={handleSave}

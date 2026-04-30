@@ -8,6 +8,7 @@ import {
   BarChart3, Newspaper, Trophy, ShoppingBag, Play,
   Gamepad2, Users, UserCog, Home, Settings, Shield,
   ChevronLeft, ChevronRight, Globe, Radio, Megaphone, Crown, LayoutTemplate,
+  ClipboardList, HeadphonesIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
@@ -20,7 +21,8 @@ const navItems = [
   { label: "Гл. страница", href: "/admin/hero", icon: Home },
   { label: "Новости", href: "/admin/news", icon: Newspaper },
   { label: "Турниры", href: "/admin/tournaments", icon: Trophy },
-  { label: "Игры", href: "/admin/games", icon: Gamepad2 },
+  { label: "Заявки", href: "/admin/applications", icon: ClipboardList },
+  { label: "Поддержка", href: "/admin/support", icon: HeadphonesIcon },
   { label: "Команды", href: "/admin/teams", icon: Users },
   { label: "Пользователи", href: "/admin/users", icon: UserCog },
   { label: "Магазин", href: "/admin/shop", icon: ShoppingBag },

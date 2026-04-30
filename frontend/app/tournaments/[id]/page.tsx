@@ -2,11 +2,19 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowLeft, Trophy, Users, DollarSign, Calendar, Clock, Shield, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import {
+  ArrowLeft, Trophy, Users, DollarSign, Calendar, Clock, Shield,
+  X, Phone, User, Hash, Plus, Minus, Send, CheckCircle,
+} from "lucide-react";
 import { useContentStore } from "@/store/contentStore";
 import { useAuthStore } from "@/store/authStore";
+import { db } from "@/lib/firebase";
+import { addDoc, collection, serverTimestamp, getDocs, query, where } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+
+type AppStatus = "pending" | "approved" | "rejected" | null;
 
 const statusConfig = {
   registration: { label: "Регистрация открыта", dot: "bg-green-400", badge: "text-green-400 bg-green-500/20 border-green-500/40" },
@@ -15,11 +23,80 @@ const statusConfig = {
   finished: { label: "Завершён", dot: "bg-gray-500", badge: "text-gray-500 bg-gray-500/10 border-gray-500/20" },
 };
 
+interface PlayerField { gameId: string; nickname: string; }
+
 export default function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { tournaments } = useContentStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const tournament = tournaments.find((t) => t.id === id);
+
+  const [modal, setModal] = useState(false);
+  const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [teamSize, setTeamSize] = useState(5);
+  const [appStatus, setAppStatus] = useState<AppStatus>(null);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    getDocs(query(collection(db, "tournament_applications"), where("captainId", "==", user.id), where("tournamentId", "==", id)))
+      .then((snap) => {
+        if (!snap.empty) setAppStatus(snap.docs[0].data().status as AppStatus);
+      })
+      .catch(() => {});
+  }, [user, id]);
+  const [captainPhone, setCaptainPhone] = useState("");
+  const [players, setPlayers] = useState<PlayerField[]>(
+    Array.from({ length: 5 }, () => ({ gameId: "", nickname: "" }))
+  );
+
+  function handleSizeChange(size: number) {
+    setTeamSize(size);
+    setPlayers((prev) => {
+      const next = [...prev];
+      while (next.length < size) next.push({ gameId: "", nickname: "" });
+      return next.slice(0, size);
+    });
+  }
+
+  function updatePlayer(idx: number, field: keyof PlayerField, value: string) {
+    setPlayers((prev) => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
+  }
+
+  async function submitApplication() {
+    if (!user || !captainPhone.trim()) return;
+    const allFilled = players.every((p) => p.gameId.trim() && p.nickname.trim());
+    if (!allFilled) return;
+    setLoading(true);
+    try {
+      await addDoc(collection(db, "tournament_applications"), {
+        tournamentId: id,
+        tournamentTitle: tournament?.title || "",
+        captainId: user.id,
+        captainNickname: user.nickname,
+        captainEmail: user.email,
+        captainPhone: captainPhone.trim(),
+        teamSize,
+        players,
+        status: "pending",
+        createdAt: serverTimestamp(),
+      });
+      setDone(true);
+      setAppStatus("pending");
+    } catch (e) {
+      console.warn(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function closeModal() {
+    setModal(false);
+    setDone(false);
+    setCaptainPhone("");
+    setTeamSize(5);
+    setPlayers(Array.from({ length: 5 }, () => ({ gameId: "", nickname: "" })));
+  }
 
   if (!tournament) {
     return (
@@ -70,9 +147,7 @@ export default function TournamentDetailPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Stats */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 { label: "Призовой фонд", value: `${tournament.prizePool} UZS`, icon: DollarSign, color: "text-cyber-neon" },
@@ -88,7 +163,6 @@ export default function TournamentDetailPage() {
               ))}
             </motion.div>
 
-            {/* Description */}
             {tournament.description && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-2xl p-6">
                 <h2 className="font-display font-bold text-white mb-3">О турнире</h2>
@@ -96,7 +170,6 @@ export default function TournamentDetailPage() {
               </motion.div>
             )}
 
-            {/* Teams progress */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display font-bold text-white">Регистрация команд</h2>
@@ -114,24 +187,28 @@ export default function TournamentDetailPage() {
 
           {/* Sidebar */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }} className="space-y-4">
-            {/* CTA */}
             {tournament.status === "registration" && (
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="font-display font-bold text-white mb-4">Участие</h3>
-                {isAuthenticated ? (
-                  <button className="w-full py-3.5 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-display font-bold rounded-xl hover:shadow-neon transition-all">
-                    Зарегистрировать команду
-                  </button>
-                ) : (
+                {!isAuthenticated ? (
                   <div className="space-y-3">
                     <p className="text-gray-400 text-sm text-center">Войди чтобы зарегистрироваться</p>
-                    <Link href="/auth/login" className="block w-full py-3.5 text-center bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-display font-bold rounded-xl hover:shadow-neon transition-all">
-                      Войти
-                    </Link>
-                    <Link href="/auth/register" className="block w-full py-3 text-center glass-card rounded-xl text-gray-300 hover:text-white hover:border-cyber-neon/30 transition-all text-sm">
-                      Создать аккаунт
-                    </Link>
+                    <Link href="/auth/login" className="block w-full py-3.5 text-center bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-display font-bold rounded-xl hover:shadow-neon transition-all">Войти</Link>
+                    <Link href="/auth/register" className="block w-full py-3 text-center glass-card rounded-xl text-gray-300 hover:text-white text-sm">Создать аккаунт</Link>
                   </div>
+                ) : appStatus === "pending" ? (
+                  <div className="w-full py-3.5 flex items-center justify-center gap-2 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-display font-bold rounded-xl text-sm">
+                    <Clock className="w-4 h-4" />На рассмотрении
+                  </div>
+                ) : appStatus === "approved" ? (
+                  <div className="w-full py-3.5 flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/30 text-green-400 font-display font-bold rounded-xl text-sm">
+                    <CheckCircle className="w-4 h-4" />Заявка принята!
+                  </div>
+                ) : (
+                  <button onClick={() => setModal(true)}
+                    className="w-full py-3.5 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-display font-bold rounded-xl hover:shadow-neon transition-all">
+                    Подать заявку
+                  </button>
                 )}
               </div>
             )}
@@ -143,13 +220,10 @@ export default function TournamentDetailPage() {
                   <span className="text-red-400 font-mono font-bold text-sm">LIVE</span>
                 </div>
                 <p className="text-gray-400 text-sm mb-4">Турнир идёт прямо сейчас</p>
-                <button className="w-full py-3 bg-red-500/20 border border-red-500/40 text-red-400 font-display font-bold rounded-xl hover:bg-red-500/30 transition-all text-sm">
-                  Смотреть трансляцию
-                </button>
+                <button className="w-full py-3 bg-red-500/20 border border-red-500/40 text-red-400 font-display font-bold rounded-xl hover:bg-red-500/30 transition-all text-sm">Смотреть трансляцию</button>
               </div>
             )}
 
-            {/* Bracket placeholder */}
             <div className="glass-card rounded-2xl p-6">
               <h3 className="font-display font-bold text-white mb-3 flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-cyber-neon" />Формат
@@ -163,6 +237,135 @@ export default function TournamentDetailPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* Registration modal */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={(e) => e.target === e.currentTarget && closeModal()}>
+            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+              className="glass-card rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+
+              {done ? (
+                <div className="p-10 text-center">
+                  <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                  <h3 className="font-display font-black text-2xl text-white mb-2">Заявка отправлена!</h3>
+                  <p className="text-gray-400 mb-6">Администратор рассмотрит вашу заявку и свяжется с вами.</p>
+                  <button onClick={closeModal}
+                    className="px-6 py-3 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-display font-bold rounded-xl hover:shadow-neon transition-all">
+                    Закрыть
+                  </button>
+                </div>
+              ) : (
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="font-display font-black text-xl text-white">Заявка на турнир</h3>
+                      <p className="text-gray-500 text-sm font-mono mt-0.5">{tournament.title}</p>
+                    </div>
+                    <button onClick={closeModal} className="text-gray-500 hover:text-white transition-colors">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Team size selector */}
+                  <div className="mb-6">
+                    <label className="block text-xs font-mono text-gray-500 uppercase mb-3">Количество игроков в команде</label>
+                    <div className="flex gap-2">
+                      {[5, 6, 7].map((n) => (
+                        <button key={n} onClick={() => handleSizeChange(n)}
+                          className={cn(
+                            "flex-1 py-3 rounded-xl font-display font-bold text-lg transition-all",
+                            teamSize === n
+                              ? "bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white shadow-neon"
+                              : "glass-card text-gray-400 hover:text-white"
+                          )}>
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Players */}
+                  <div className="mb-6">
+                    <label className="block text-xs font-mono text-gray-500 uppercase mb-3">
+                      Игроки <span className="text-cyber-neon">(Игрок 1 — капитан)</span>
+                    </label>
+                    <div className="space-y-3">
+                      {players.map((p, i) => (
+                        <div key={i} className="flex gap-3 items-start">
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1",
+                            i === 0 ? "bg-yellow-500/20 border border-yellow-500/40 text-yellow-400" : "bg-cyber-purple/20 border border-cyber-glass-border text-gray-400"
+                          )}>
+                            {i + 1}
+                          </div>
+                          <div className="flex-1 grid grid-cols-2 gap-2">
+                            <div className="relative">
+                              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
+                              <input
+                                value={p.gameId}
+                                onChange={(e) => updatePlayer(i, "gameId", e.target.value)}
+                                placeholder="ID в игре"
+                                className="w-full pl-8 pr-3 py-2.5 bg-cyber-purple/20 border border-cyber-glass-border rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-cyber-neon/50 font-mono"
+                              />
+                            </div>
+                            <div className="relative">
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
+                              <input
+                                value={p.nickname}
+                                onChange={(e) => updatePlayer(i, "nickname", e.target.value)}
+                                placeholder="Никнейм"
+                                className="w-full pl-8 pr-3 py-2.5 bg-cyber-purple/20 border border-cyber-glass-border rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-cyber-neon/50 font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Captain phone */}
+                  <div className="mb-6">
+                    <label className="block text-xs font-mono text-gray-500 uppercase mb-2">Телефон капитана</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
+                      <input
+                        value={captainPhone}
+                        onChange={(e) => setCaptainPhone(e.target.value)}
+                        placeholder="+998 90 123 45 67"
+                        className="w-full pl-10 pr-4 py-3 bg-cyber-purple/20 border border-cyber-glass-border rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-cyber-neon/50 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Captain info (read-only) */}
+                  <div className="mb-6 p-4 bg-cyber-purple/10 border border-cyber-glass-border rounded-xl">
+                    <p className="text-xs font-mono text-gray-500 uppercase mb-2">Капитан (ваш аккаунт)</p>
+                    <p className="text-white text-sm font-semibold">{user?.nickname}</p>
+                    <p className="text-gray-500 text-xs font-mono">{user?.email}</p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button onClick={closeModal}
+                      className="flex-1 py-3 glass-card rounded-xl text-gray-400 hover:text-white text-sm transition-all">
+                      Отмена
+                    </button>
+                    <button
+                      onClick={submitApplication}
+                      disabled={loading || !captainPhone.trim() || !players.every((p) => p.gameId.trim() && p.nickname.trim())}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-cyber-purple-bright to-cyber-neon text-white font-display font-bold rounded-xl hover:shadow-neon transition-all disabled:opacity-40">
+                      <Send className="w-4 h-4" />
+                      {loading ? "Отправка..." : "Отправить заявку"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

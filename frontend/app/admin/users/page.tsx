@@ -68,11 +68,13 @@ export default function AdminUsersPage() {
     if (!notifyModal || !notifyText.trim()) return;
     setActionLoading(notifyModal.uid + "-notify");
     try {
-      await addDoc(collection(db, "notifications"), {
-        userId: notifyModal.uid,
+      await addDoc(collection(db, "broadcasts"), {
+        title: "Сообщение от администратора",
         message: notifyText.trim(),
-        fromAdmin: currentUser?.nickname || "Admin",
-        read: false,
+        fromName: currentUser?.nickname || "Admin",
+        fromRole: currentUser?.role || "admin",
+        to: notifyModal.uid,
+        readBy: [],
         createdAt: serverTimestamp(),
       });
       setNotifyText("");

@@ -32,7 +32,6 @@ export default function AdminDashboard() {
     { label: "Добавить новость", desc: "Опубликовать статью", icon: Newspaper, href: "/admin/news", color: "from-blue-600 to-cyan-600" },
     { label: "Новый турнир", desc: "Создать турнир", icon: Trophy, href: "/admin/tournaments", color: "from-yellow-600 to-orange-600" },
     { label: "Добавить товар", desc: "В магазин", icon: ShoppingBag, href: "/admin/shop", color: "from-green-600 to-teal-600" },
-    { label: "Управление играми", desc: "Какие игры на платформе", icon: Gamepad2, href: "/admin/games", color: "from-pink-600 to-rose-600" },
     { label: "Статистика главной", desc: "Цифры под hero-секцией", icon: BarChart2, href: "/admin/stats", color: "from-cyan-600 to-teal-600" },
     { label: "Настройки сайта", desc: "Название, цвета, баннер", icon: Settings, href: "/admin/settings", color: "from-gray-600 to-slate-600" },
   ];
